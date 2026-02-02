@@ -128,12 +128,10 @@ function App() {
             setUser(u);
             setLoading(false);
             if (u) {
-                // Slušaj termine
                 db.ref('appointments/' + u.uid).on('value', snapshot => {
                     const data = snapshot.val();
                     setAppointments(data ? Object.values(data) : []);
                 });
-                // Slušaj klijente
                 db.ref('clients/' + u.uid).on('value', snapshot => {
                     const data = snapshot.val();
                     setClients(data ? Object.values(data) : []);
@@ -171,10 +169,9 @@ function App() {
         const fullDate = `${selectedDate}. ${currentMonthName} ${currentYear}`;
         const newRef = db.ref('appointments/' + user.uid).push();
         
-        // Automatski dodaj klijenta u CRM ako ne postoji
         if (!clients.find(c => c.name.toLowerCase() === newEntry.client.toLowerCase())) {
             const clientRef = db.ref('clients/' + user.uid).push();
-            clientRef.set({ name: newEntry.client, phone: newEntry.phone || '', social: '', id: clientRef.key });
+            clientRef.set({ name: newEntry.client, phone: newEntry.phone || '', social: '', email: '', id: clientRef.key });
         }
 
         newRef.set({ ...newEntry, date: fullDate, id: newRef.key });
@@ -322,14 +319,16 @@ function App() {
                 )}
             </main>
 
-            {/* MODALI - Identicni dizajnu koji volis */}
+            {/* EDIT CLIENT MODAL */}
             {isEditClientOpen && editingClient && (
                 <div className="fixed inset-0 z-[140] bg-black/95 backdrop-blur-xl flex items-center p-6">
                     <div className="card-bg w-full p-8 rounded-[40px] border border-slate-800">
                         <h2 className="text-xl font-black gold-text uppercase italic mb-8 text-center">Edit Profile</h2>
                         <div className="space-y-4">
                             <input type="text" value={editingClient.name} className="w-full bg-[#0a0f1d] border border-slate-800 p-5 rounded-2xl outline-none font-bold text-white text-center" onChange={e => setEditingClient({...editingClient, name: e.target.value})} />
-                            <input type="text" value={editingClient.social} className="w-full bg-[#0a0f1d] border border-slate-800 p-5 rounded-2xl outline-none text-white text-center text-sm" onChange={e => setEditingClient({...editingClient, social: e.target.value})} />
+                            <input type="text" placeholder="Instagram @tag" value={editingClient.social} className="w-full bg-[#0a0f1d] border border-slate-800 p-5 rounded-2xl outline-none text-white text-center text-sm" onChange={e => setEditingClient({...editingClient, social: e.target.value})} />
+                            <input type="text" placeholder="Phone Number" value={editingClient.phone} className="w-full bg-[#0a0f1d] border border-slate-800 p-5 rounded-2xl outline-none text-white text-center text-sm" onChange={e => setEditingClient({...editingClient, phone: e.target.value})} />
+                            <input type="email" placeholder="Email Address" value={editingClient.email} className="w-full bg-[#0a0f1d] border border-slate-800 p-5 rounded-2xl outline-none text-white text-center text-sm" onChange={e => setEditingClient({...editingClient, email: e.target.value})} />
                             <button onClick={handleUpdateClient} className="w-full gold-bg text-black font-black p-5 rounded-2xl uppercase tracking-widest mt-6 shadow-2xl">Update Info</button>
                             <button onClick={() => setIsEditClientOpen(false)} className="w-full text-slate-600 font-black p-2 uppercase tracking-widest text-[9px] mt-2 text-center">Cancel</button>
                         </div>
@@ -337,6 +336,7 @@ function App() {
                 </div>
             )}
 
+            {/* NEW CLIENT MODAL */}
             {isClientModalOpen && (
                 <div className="fixed inset-0 z-[120] bg-black/95 backdrop-blur-xl flex items-center p-6" onClick={() => setIsClientModalOpen(false)}>
                     <div className="card-bg w-full p-8 rounded-[40px] border border-slate-800" onClick={e => e.stopPropagation()}>
@@ -344,23 +344,34 @@ function App() {
                         <div className="space-y-4">
                             <input type="text" placeholder="Full Name" className="w-full bg-[#0a0f1d] border border-slate-800 p-5 rounded-2xl outline-none font-bold text-white text-center" onChange={e => setNewClient({...newClient, name: e.target.value})} />
                             <input type="text" placeholder="Instagram @tag" className="w-full bg-[#0a0f1d] border border-slate-800 p-5 rounded-2xl outline-none text-white text-center text-sm" onChange={e => setNewClient({...newClient, social: e.target.value})} />
+                            <input type="text" placeholder="Phone Number" className="w-full bg-[#0a0f1d] border border-slate-800 p-5 rounded-2xl outline-none text-white text-center text-sm" onChange={e => setNewClient({...newClient, phone: e.target.value})} />
+                            <input type="email" placeholder="Email Address" className="w-full bg-[#0a0f1d] border border-slate-800 p-5 rounded-2xl outline-none text-white text-center text-sm" onChange={e => setNewClient({...newClient, email: e.target.value})} />
                             <button onClick={handleAddClient} className="w-full gold-bg text-black font-black p-5 rounded-2xl uppercase tracking-widest mt-6 shadow-2xl">Save Profile</button>
+                            <button onClick={() => setIsClientModalOpen(false)} className="w-full text-slate-600 font-black p-2 uppercase tracking-widest text-[9px] mt-2 text-center">Cancel</button>
                         </div>
                     </div>
                 </div>
             )}
 
+            {/* VIEW CLIENT DETAILS */}
             {selectedClientData && (
                 <div className="fixed inset-0 z-[130] bg-black/95 backdrop-blur-xl flex items-center p-6" onClick={() => setSelectedClientData(null)}>
                     <div className="card-bg w-full p-8 rounded-[40px] border border-slate-800" onClick={e => e.stopPropagation()}>
                         <div className="w-20 h-20 gold-bg rounded-full mx-auto flex items-center justify-center text-black text-3xl font-black mb-6 shadow-2xl">{selectedClientData.name[0]}</div>
                         <h2 className="text-2xl font-black text-center text-white uppercase mb-2 italic tracking-tighter">{selectedClientData.name}</h2>
-                        <p className="text-center gold-text font-bold text-[10px] mb-8 tracking-[0.3em] uppercase">{selectedClientData.social || '@ink_client'}</p>
+                        <div className="space-y-4 mb-8">
+                            <p className="text-center gold-text font-bold text-[10px] tracking-[0.3em] uppercase">{selectedClientData.social || 'No Instagram'}</p>
+                            <div className="grid grid-cols-1 gap-2">
+                                <p className="text-center text-slate-400 font-bold text-[11px] uppercase tracking-widest">{selectedClientData.phone || 'No Phone'}</p>
+                                <p className="text-center text-slate-400 font-bold text-[11px] uppercase tracking-widest">{selectedClientData.email || 'No Email'}</p>
+                            </div>
+                        </div>
                         <button onClick={() => setSelectedClientData(null)} className="w-full bg-slate-800 text-slate-500 font-black p-5 rounded-2xl uppercase tracking-[0.2em] text-[10px]">Close</button>
                     </div>
                 </div>
             )}
 
+            {/* ADD SESSION MODAL */}
             {isModalOpen && (
                 <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-md flex items-end animate-in slide-in-from-bottom duration-500" onClick={() => setIsModalOpen(false)}>
                     <div className="card-bg w-full p-8 rounded-t-[40px] border-t border-slate-800 max-h-[95vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
@@ -383,6 +394,7 @@ function App() {
                                 </div>
                             </div>
                             <button onClick={handleSaveAppointment} className="w-full gold-bg text-black font-black p-5 rounded-2xl uppercase tracking-widest mt-6 shadow-2xl">Confirm Session</button>
+                            <button onClick={() => setIsModalOpen(false)} className="w-full text-slate-600 font-black p-2 uppercase tracking-widest text-[9px] mt-2 text-center">Cancel</button>
                         </div>
                     </div>
                 </div>
