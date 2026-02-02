@@ -1,35 +1,41 @@
 const { useState, useEffect } = React;
 
+// --- FIREBASE KONFIGURACIJA ---
+const firebaseConfig = {
+  apiKey: "AIzaSyDtMzn6v_Ra975jw_lIq1fR_SC5",
+  authDomain: "inkflow-105e9.firebaseapp.com",
+  databaseURL: "https://inkflow-105e9-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "inkflow-105e9",
+  storageBucket: "inkflow-105e9.firebasestorage.app",
+  messagingSenderId: "384151590972",
+  appId: "1:384151590972:web:6b9d71f5c87686"
+};
+
+// Inicijalizacija
+if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+}
+const db = firebase.database();
+const auth = firebase.auth();
+
 // --- LOGIN KOMPONENTA ---
-function AuthScreen({ onLogin }) {
+function AuthScreen() {
     const [isLogin, setIsLogin] = useState(true);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         const cleanEmail = email.trim().toLowerCase();
-        
         if (!cleanEmail || !password) return alert("Popunite polja!");
         
-        const users = JSON.parse(localStorage.getItem('inkflow_users') || '[]');
-        
-        if (isLogin) {
-            const user = users.find(u => u.email.toLowerCase().trim() === cleanEmail && u.password === password);
-            if (user) {
-                localStorage.setItem('inkflow_logged_user', JSON.stringify(user));
-                window.location.reload();
+        try {
+            if (isLogin) {
+                await auth.signInWithEmailAndPassword(cleanEmail, password);
             } else {
-                alert("Pogrešan email ili lozinka!");
+                await auth.createUserWithEmailAndPassword(cleanEmail, password);
             }
-        } else {
-            if (users.find(u => u.email.toLowerCase().trim() === cleanEmail)) {
-                return alert("Email već postoji!");
-            }
-            const newUser = { email: cleanEmail, password };
-            users.push(newUser);
-            localStorage.setItem('inkflow_users', JSON.stringify(users));
-            localStorage.setItem('inkflow_logged_user', JSON.stringify(newUser));
-            window.location.reload();
+        } catch (error) {
+            alert(error.message);
         }
     };
 
@@ -37,29 +43,12 @@ function AuthScreen({ onLogin }) {
         <div className="min-h-screen bg-[#020617] flex items-center justify-center p-6 text-white font-sans">
             <div className="card-bg w-full max-w-md p-10 rounded-[50px] border border-white/5 text-center shadow-2xl">
                 <h1 className="text-4xl font-black gold-text italic tracking-tighter mb-2">INKFLOW</h1>
-                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.4em] mb-12">Private Studio Access</p>
+                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.4em] mb-12">Private Cloud Access</p>
                 <div className="space-y-4">
-                    <input 
-                        type="email" 
-                        placeholder="Artist Email" 
-                        className="w-full bg-[#0a0f1d] border border-white/5 p-5 rounded-3xl outline-none text-center font-bold" 
-                        onChange={e => setEmail(e.target.value)} 
-                        autoCapitalize="none"
-                        autoCorrect="off"
-                        spellCheck="false"
-                    />
-                    <input 
-                        type="password" 
-                        placeholder="Password" 
-                        className="w-full bg-[#0a0f1d] border border-white/5 p-5 rounded-3xl outline-none text-center font-bold" 
-                        onChange={e => setPassword(e.target.value)} 
-                    />
-                    <button onClick={handleSubmit} className="w-full gold-bg text-black font-black p-5 rounded-3xl uppercase tracking-widest mt-4 shadow-2xl"> 
-                        {isLogin ? 'Login' : 'Sign Up'} 
-                    </button>
-                    <button onClick={() => setIsLogin(!isLogin)} className="text-[9px] text-slate-600 font-bold uppercase mt-6 block mx-auto tracking-widest text-white/40"> 
-                        {isLogin ? 'Switch to Sign Up' : 'Switch to Login'} 
-                    </button>
+                    <input type="email" placeholder="Artist Email" className="w-full bg-[#0a0f1d] border border-white/5 p-5 rounded-3xl outline-none text-center font-bold" onChange={e => setEmail(e.target.value)} autoCapitalize="none" />
+                    <input type="password" placeholder="Password" className="w-full bg-[#0a0f1d] border border-white/5 p-5 rounded-3xl outline-none text-center font-bold" onChange={e => setPassword(e.target.value)} />
+                    <button onClick={handleSubmit} className="w-full gold-bg text-black font-black p-5 rounded-3xl uppercase tracking-widest mt-4 shadow-2xl">{isLogin ? 'Login' : 'Sign Up'}</button>
+                    <button onClick={() => setIsLogin(!isLogin)} className="text-[9px] text-white/40 font-bold uppercase mt-6 block mx-auto tracking-widest">{isLogin ? 'Switch to Sign Up' : 'Switch to Login'}</button>
                 </div>
             </div>
         </div>
@@ -108,10 +97,6 @@ function BusinessOverview({ appointments, currentMonthName, currentYear, months 
                         </div>
                     ))}
                 </div>
-                <div className="mt-4 pt-4 border-t border-white/5 flex justify-between items-center px-2">
-                    <span className="text-[10px] font-black text-slate-500 uppercase">Year Total:</span>
-                    <span className="gold-text font-black text-lg">{yearlyStats.reduce((a, b) => a + b.rev, 0)}€</span>
-                </div>
             </div>
         </div>
     );
@@ -119,7 +104,8 @@ function BusinessOverview({ appointments, currentMonthName, currentYear, months 
 
 // --- GLAVNA APLIKACIJA ---
 function App() {
-    const [user, setUser] = useState(() => JSON.parse(localStorage.getItem('inkflow_logged_user')));
+    const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('dash');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isClientModalOpen, setIsClientModalOpen] = useState(false);
@@ -131,28 +117,34 @@ function App() {
     const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
     const [selectedDate, setSelectedDate] = useState(new Date().getDate());
 
-    // KLJUČNA IZMENA: Odmah čitamo podatke samo za ulogovanog korisnika
-    const storageKeyApps = user ? `inkflow_apps_${user.email}` : 'guest_apps';
-    const storageKeyClients = user ? `inkflow_clients_${user.email}` : 'guest_clients';
-
-    const [appointments, setAppointments] = useState(() => JSON.parse(localStorage.getItem(storageKeyApps) || '[]'));
-    const [clients, setClients] = useState(() => JSON.parse(localStorage.getItem(storageKeyClients) || '[]'));
+    const [appointments, setAppointments] = useState([]);
+    const [clients, setClients] = useState([]);
 
     const [newEntry, setNewEntry] = useState({ client: '', time: '', date: '', price: '', phone: '', email: '', style: '' });
     const [newClient, setNewClient] = useState({ name: '', phone: '', email: '', social: '' });
 
-    useEffect(() => { 
-        if(user) {
-            localStorage.setItem(storageKeyApps, JSON.stringify(appointments));
-            localStorage.setItem('inkflow_logged_user', JSON.stringify(user));
-        }
-    }, [appointments, user]);
+    useEffect(() => {
+        const unsubscribe = auth.onAuthStateChanged(u => {
+            setUser(u);
+            setLoading(false);
+            if (u) {
+                // Slušaj termine
+                db.ref('appointments/' + u.uid).on('value', snapshot => {
+                    const data = snapshot.val();
+                    setAppointments(data ? Object.values(data) : []);
+                });
+                // Slušaj klijente
+                db.ref('clients/' + u.uid).on('value', snapshot => {
+                    const data = snapshot.val();
+                    setClients(data ? Object.values(data) : []);
+                });
+            }
+        });
+        return () => unsubscribe();
+    }, []);
 
-    useEffect(() => { 
-        if(user) localStorage.setItem(storageKeyClients, JSON.stringify(clients)); 
-    }, [clients, user]);
-
-    if (!user) return <AuthScreen onLogin={setUser} />;
+    if (loading) return <div className="min-h-screen bg-[#020617] flex items-center justify-center text-white font-black italic gold-text">INKFLOW...</div>;
+    if (!user) return <AuthScreen />;
 
     const months = [
         { name: "JANUAR", days: 31 }, { name: "FEBRUAR", days: 28 }, { name: "MART", days: 31 },
@@ -177,45 +169,50 @@ function App() {
     const handleSaveAppointment = () => {
         if (!newEntry.client) return;
         const fullDate = `${selectedDate}. ${currentMonthName} ${currentYear}`;
-        const appId = Date.now();
+        const newRef = db.ref('appointments/' + user.uid).push();
+        
+        // Automatski dodaj klijenta u CRM ako ne postoji
         if (!clients.find(c => c.name.toLowerCase() === newEntry.client.toLowerCase())) {
-            setClients([...clients, { name: newEntry.client, phone: newEntry.phone, email: newEntry.email, id: appId, social: '' }]);
+            const clientRef = db.ref('clients/' + user.uid).push();
+            clientRef.set({ name: newEntry.client, phone: newEntry.phone || '', social: '', id: clientRef.key });
         }
-        setAppointments([...appointments, { ...newEntry, date: fullDate, id: appId + 1 }]);
+
+        newRef.set({ ...newEntry, date: fullDate, id: newRef.key });
         setIsModalOpen(false);
         setNewEntry({ client: '', time: '', date: '', price: '', phone: '', email: '', style: '' });
     };
 
     const handleAddClient = () => {
         if (!newClient.name) return;
-        setClients([...clients, { ...newClient, id: Date.now() }]);
+        const clientRef = db.ref('clients/' + user.uid).push();
+        clientRef.set({ ...newClient, id: clientRef.key });
         setIsClientModalOpen(false);
         setNewClient({ name: '', phone: '', email: '', social: '' });
     };
 
     const handleUpdateClient = () => {
-        setClients(clients.map(c => c.id === editingClient.id ? editingClient : c));
+        db.ref(`clients/${user.uid}/${editingClient.id}`).update(editingClient);
         setIsEditClientOpen(false);
         setEditingClient(null);
     };
 
-    const deleteApp = (id) => { if (window.confirm("Obrisati termin?")) setAppointments(appointments.filter(a => a.id !== id)); };
-    const deleteClient = (id, e) => { e.stopPropagation(); if (window.confirm("Obrisati klijenta?")) setClients(clients.filter(c => c.id !== id)); };
+    const deleteApp = (id) => { if (window.confirm("Obrisati termin?")) db.ref(`appointments/${user.uid}/${id}`).remove(); };
+    const deleteClient = (id, e) => { e.stopPropagation(); if (window.confirm("Obrisati klijenta?")) db.ref(`clients/${user.uid}/${id}`).remove(); };
 
     return (
-        <div className="min-h-screen pb-32">
+        <div className="min-h-screen pb-32 bg-[#020617] text-white">
             <header className="p-6 flex justify-between items-center">
                 <div className="flex flex-col">
                     <div className="flex items-baseline gap-2">
                         <h1 className="text-2xl font-black gold-text italic uppercase leading-none tracking-tighter">INKFLOW</h1>
-                        <span className="text-[7px] font-bold text-slate-500 uppercase tracking-widest">by Djape Noise</span>
+                        <span className="text-[7px] font-bold text-slate-500 uppercase tracking-widest">CLOUD PRO</span>
                     </div>
                     <p className="text-[9px] text-slate-600 font-bold uppercase tracking-[0.4em] mt-1">TATTOO MANAGEMENT</p>
                 </div>
                 <div className="flex gap-2">
-                    <button onClick={() => { localStorage.removeItem('inkflow_logged_user'); window.location.reload(); }} className="bg-slate-800 text-slate-400 p-2 rounded-full text-[8px] uppercase font-black">Out</button>
+                    <button onClick={() => auth.signOut()} className="bg-white/5 text-slate-400 px-4 py-2 rounded-full text-[8px] uppercase font-black">Sign Out</button>
                     {activeTab === 'crm' && (
-                        <button onClick={() => setIsClientModalOpen(true)} className="gold-bg text-black px-6 py-2 rounded-full font-black text-[10px] uppercase shadow-lg active:scale-90 transition-transform">Add</button>
+                        <button onClick={() => setIsClientModalOpen(true)} className="gold-bg text-black px-6 py-2 rounded-full font-black text-[10px] uppercase shadow-lg">Add</button>
                     )}
                 </div>
             </header>
@@ -307,16 +304,16 @@ function App() {
 
                 {activeTab === 'crm' && (
                     <div className="space-y-3">
-                        {clients.length === 0 ? <p className="text-center opacity-20 py-20 italic">No clients yet</p> :
+                        {clients.length === 0 ? <p className="text-center opacity-20 py-20 italic">No clients in cloud</p> :
                             clients.map(c => (
-                                <div key={c.id} onClick={() => setSelectedClientData(c)} className="card-bg p-5 flex justify-between items-center border border-slate-800 shadow-md active:scale-95 transition-all">
+                                <div key={c.id} onClick={() => setSelectedClientData(c)} className="card-bg p-5 flex justify-between items-center border border-slate-800 active:scale-95 transition-all">
                                     <div className="flex items-center gap-4">
                                         <div className="w-10 h-10 gold-bg rounded-full flex items-center justify-center text-black font-black">{c.name[0]}</div>
                                         <div><p className="font-bold text-white">{c.name}</p><p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">{c.social || '@ink_client'}</p></div>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <button onClick={(e) => { e.stopPropagation(); setEditingClient(c); setIsEditClientOpen(true); }} className="p-3 opacity-30 hover:opacity-100 transition-opacity">✏️</button>
-                                        <button onClick={(e) => deleteClient(c.id, e)} className="p-3 grayscale opacity-30 hover:opacity-100 transition-opacity">🗑️</button>
+                                        <button onClick={(e) => { e.stopPropagation(); setEditingClient(c); setIsEditClientOpen(true); }} className="p-3 opacity-30">✏️</button>
+                                        <button onClick={(e) => deleteClient(c.id, e)} className="p-3 grayscale opacity-30">🗑️</button>
                                     </div>
                                 </div>
                             ))
@@ -325,15 +322,14 @@ function App() {
                 )}
             </main>
 
-            {/* MODALI - Ostaju identični tvom originalu */}
+            {/* MODALI - Identicni dizajnu koji volis */}
             {isEditClientOpen && editingClient && (
-                <div className="fixed inset-0 z-[140] bg-black/95 backdrop-blur-xl flex items-center p-6 animate-in fade-in duration-300">
+                <div className="fixed inset-0 z-[140] bg-black/95 backdrop-blur-xl flex items-center p-6">
                     <div className="card-bg w-full p-8 rounded-[40px] border border-slate-800">
                         <h2 className="text-xl font-black gold-text uppercase italic mb-8 text-center">Edit Profile</h2>
                         <div className="space-y-4">
-                            <input type="text" value={editingClient.name} className="w-full bg-[#0a0f1d] border border-slate-800 p-5 rounded-2xl outline-none font-bold text-white text-center shadow-inner" onChange={e => setEditingClient({...editingClient, name: e.target.value})} />
-                            <input type="tel" value={editingClient.phone} className="w-full bg-[#0a0f1d] border border-slate-800 p-5 rounded-2xl outline-none text-white text-center text-sm shadow-inner" onChange={e => setEditingClient({...editingClient, phone: e.target.value})} />
-                            <input type="text" value={editingClient.social} className="w-full bg-[#0a0f1d] border border-slate-800 p-5 rounded-2xl outline-none text-white text-center text-sm shadow-inner" onChange={e => setEditingClient({...editingClient, social: e.target.value})} />
+                            <input type="text" value={editingClient.name} className="w-full bg-[#0a0f1d] border border-slate-800 p-5 rounded-2xl outline-none font-bold text-white text-center" onChange={e => setEditingClient({...editingClient, name: e.target.value})} />
+                            <input type="text" value={editingClient.social} className="w-full bg-[#0a0f1d] border border-slate-800 p-5 rounded-2xl outline-none text-white text-center text-sm" onChange={e => setEditingClient({...editingClient, social: e.target.value})} />
                             <button onClick={handleUpdateClient} className="w-full gold-bg text-black font-black p-5 rounded-2xl uppercase tracking-widest mt-6 shadow-2xl">Update Info</button>
                             <button onClick={() => setIsEditClientOpen(false)} className="w-full text-slate-600 font-black p-2 uppercase tracking-widest text-[9px] mt-2 text-center">Cancel</button>
                         </div>
@@ -346,11 +342,9 @@ function App() {
                     <div className="card-bg w-full p-8 rounded-[40px] border border-slate-800" onClick={e => e.stopPropagation()}>
                         <h2 className="text-xl font-black gold-text uppercase italic mb-8 text-center">New Client Profile</h2>
                         <div className="space-y-4">
-                            <input type="text" placeholder="Full Name" className="w-full bg-[#0a0f1d] border border-slate-800 p-5 rounded-2xl outline-none font-bold text-white text-center shadow-inner" onChange={e => setNewClient({...newClient, name: e.target.value})} />
-                            <input type="tel" placeholder="Phone Number" className="w-full bg-[#0a0f1d] border border-slate-800 p-5 rounded-2xl outline-none text-white text-center text-sm shadow-inner" onChange={e => setNewClient({...newClient, phone: e.target.value})} />
-                            <input type="text" placeholder="Instagram @tag" className="w-full bg-[#0a0f1d] border border-slate-800 p-5 rounded-2xl outline-none text-white text-center text-sm shadow-inner" onChange={e => setNewClient({...newClient, social: e.target.value})} />
+                            <input type="text" placeholder="Full Name" className="w-full bg-[#0a0f1d] border border-slate-800 p-5 rounded-2xl outline-none font-bold text-white text-center" onChange={e => setNewClient({...newClient, name: e.target.value})} />
+                            <input type="text" placeholder="Instagram @tag" className="w-full bg-[#0a0f1d] border border-slate-800 p-5 rounded-2xl outline-none text-white text-center text-sm" onChange={e => setNewClient({...newClient, social: e.target.value})} />
                             <button onClick={handleAddClient} className="w-full gold-bg text-black font-black p-5 rounded-2xl uppercase tracking-widest mt-6 shadow-2xl">Save Profile</button>
-                            <button onClick={() => setIsClientModalOpen(false)} className="w-full text-slate-600 font-black p-2 uppercase tracking-widest text-[9px] mt-2 text-center">Cancel</button>
                         </div>
                     </div>
                 </div>
@@ -362,9 +356,6 @@ function App() {
                         <div className="w-20 h-20 gold-bg rounded-full mx-auto flex items-center justify-center text-black text-3xl font-black mb-6 shadow-2xl">{selectedClientData.name[0]}</div>
                         <h2 className="text-2xl font-black text-center text-white uppercase mb-2 italic tracking-tighter">{selectedClientData.name}</h2>
                         <p className="text-center gold-text font-bold text-[10px] mb-8 tracking-[0.3em] uppercase">{selectedClientData.social || '@ink_client'}</p>
-                        <div className="space-y-3 bg-[#0a0f1d] p-6 rounded-3xl border border-slate-800 shadow-inner mb-6 text-center">
-                            <p className="text-slate-600 text-[9px] font-black uppercase">Phone</p><p className="text-white font-bold tracking-widest mb-3">{selectedClientData.phone || '—'}</p>
-                        </div>
                         <button onClick={() => setSelectedClientData(null)} className="w-full bg-slate-800 text-slate-500 font-black p-5 rounded-2xl uppercase tracking-[0.2em] text-[10px]">Close</button>
                     </div>
                 </div>
@@ -376,8 +367,8 @@ function App() {
                         <div className="w-12 h-1 bg-slate-800 mx-auto mb-8 rounded-full"></div>
                         <h2 className="text-xl font-black gold-text uppercase italic mb-8 text-center">{selectedDate}. {currentMonthName} {currentYear}</h2>
                         <div className="space-y-4">
-                            <input type="text" placeholder="Client Name" className="w-full bg-[#0a0f1d] border border-slate-800 p-5 rounded-2xl outline-none font-bold text-white text-center shadow-inner" onChange={e => setNewEntry({...newEntry, client: e.target.value})} />
-                            <input type="text" placeholder="Tattoo Style" className="w-full bg-[#0a0f1d] border border-slate-800 p-5 rounded-2xl outline-none text-white text-center text-sm shadow-inner" onChange={e => setNewEntry({...newEntry, style: e.target.value})} />
+                            <input type="text" placeholder="Client Name" className="w-full bg-[#0a0f1d] border border-slate-800 p-5 rounded-2xl outline-none font-bold text-white text-center" onChange={e => setNewEntry({...newEntry, client: e.target.value})} />
+                            <input type="text" placeholder="Tattoo Style" className="w-full bg-[#0a0f1d] border border-slate-800 p-5 rounded-2xl outline-none text-white text-center text-sm" onChange={e => setNewEntry({...newEntry, style: e.target.value})} />
                             <div className="grid grid-cols-2 gap-3 text-center">
                                 <div className="bg-[#0a0f1d] border border-slate-800 p-3 rounded-2xl h-20 flex flex-col justify-center">
                                     <p className="text-[8px] font-black text-slate-600 uppercase tracking-widest">Time</p>
@@ -392,7 +383,6 @@ function App() {
                                 </div>
                             </div>
                             <button onClick={handleSaveAppointment} className="w-full gold-bg text-black font-black p-5 rounded-2xl uppercase tracking-widest mt-6 shadow-2xl">Confirm Session</button>
-                            <button onClick={() => setIsModalOpen(false)} className="w-full text-slate-600 font-black p-4 uppercase tracking-[0.3em] text-[10px]">Cancel</button>
                         </div>
                     </div>
                 </div>
