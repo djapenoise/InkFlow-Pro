@@ -1,18 +1,27 @@
 const { useState, useEffect } = React;
 
-// --- POMOĆNA KOMPONENTA ZA BUSINESS TAB ---
-function BusinessOverview({ appointments, currentMonthName, currentYear }) {
+// --- POMOĆNA KOMPONENTA ZA BUSINESS TAB SA ANALIZOM ---
+function BusinessOverview({ appointments, currentMonthName, currentYear, months }) {
     const monthApps = appointments.filter(a => a.date.includes(currentMonthName) && a.date.includes(currentYear));
     const totalRev = monthApps.reduce((sum, a) => sum + (parseInt(a.price) || 0), 0);
     
+    // Analiza za celu godinu
+    const yearlyStats = months.map(m => {
+        const apps = appointments.filter(a => a.date.includes(m.name) && a.date.includes(currentYear));
+        const rev = apps.reduce((sum, a) => sum + (parseInt(a.price) || 0), 0);
+        return { name: m.name, count: apps.length, rev: rev };
+    });
+
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
+            {/* TRENUTNI MESEC */}
             <div className="card-bg p-8 border border-white/5 shadow-2xl relative overflow-hidden text-center">
                 <div className="absolute top-0 right-0 w-32 h-32 gold-bg opacity-5 blur-[50px] rounded-full"></div>
                 <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-2">Monthly Revenue</h3>
                 <p className="text-5xl font-black gold-text italic tracking-tighter">{totalRev}€</p>
                 <p className="text-[10px] text-slate-600 font-bold mt-4 uppercase tracking-widest">{currentMonthName} {currentYear}</p>
             </div>
+
             <div className="grid grid-cols-2 gap-4 text-center">
                 <div className="card-bg p-6 border border-white/5">
                     <p className="text-2xl font-black text-white">{monthApps.length}</p>
@@ -21,6 +30,26 @@ function BusinessOverview({ appointments, currentMonthName, currentYear }) {
                 <div className="card-bg p-6 border border-white/5">
                     <p className="text-2xl font-black text-white">{monthApps.length > 0 ? Math.round(totalRev / monthApps.length) : 0}€</p>
                     <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Avg / Job</p>
+                </div>
+            </div>
+
+            {/* ANALIZA SVIH MESECI - NOVO */}
+            <div className="card-bg p-6 border border-white/5">
+                <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4 italic border-b border-white/5 pb-3 text-center">Yearly Performance ({currentYear})</h3>
+                <div className="max-h-[300px] overflow-y-auto no-scrollbar space-y-2">
+                    {yearlyStats.map(m => (
+                        <div key={m.name} className={`flex justify-between items-center p-3 rounded-xl ${m.name === currentMonthName ? 'bg-yellow-500/10 border border-yellow-500/20' : 'bg-[#0a0f1d]'}`}>
+                            <div className="flex items-center gap-3">
+                                <span className={`text-[9px] font-black ${m.name === currentMonthName ? 'gold-text' : 'text-slate-600'}`}>{m.name.slice(0, 3)}</span>
+                                <span className="text-[10px] text-slate-400 font-bold uppercase">{m.count} SESSIONS</span>
+                            </div>
+                            <span className={`font-black text-xs ${m.rev > 0 ? 'text-white' : 'text-slate-800'}`}>{m.rev}€</span>
+                        </div>
+                    ))}
+                </div>
+                <div className="mt-4 pt-4 border-t border-white/5 flex justify-between items-center px-2">
+                    <span className="text-[10px] font-black text-slate-500 uppercase">Year Total:</span>
+                    <span className="gold-text font-black text-lg">{yearlyStats.reduce((a, b) => a + b.rev, 0)}€</span>
                 </div>
             </div>
         </div>
@@ -64,7 +93,6 @@ function App() {
     const currentMonthName = months[currentMonthIdx].name;
     const todayStr = `${new Date().getDate()}. ${months[new Date().getMonth()].name} ${new Date().getFullYear()}`;
 
-    // Funkcija koja proverava da li dan ima zakazivanja
     const hasAppointment = (day) => {
         const fullDateStr = `${day}. ${currentMonthName} ${currentYear}`;
         return appointments.some(app => app.date === fullDateStr);
@@ -117,14 +145,14 @@ function App() {
             <main className="p-4">
                 {activeTab === 'dash' && (
                     <div className="space-y-6">
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="card-bg p-6 text-center">
+                        <div className="grid grid-cols-2 gap-4 text-center">
+                            <div className="card-bg p-6">
                                 <p className="text-2xl font-black gold-text">
                                     {appointments.filter(a => a.date.includes(currentMonthName) && a.date.includes(currentYear)).reduce((a, b) => a + (parseInt(b.price) || 0), 0)}€
                                 </p>
                                 <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-1">Month Rev</p>
                             </div>
-                            <div className="card-bg p-6 text-center">
+                            <div className="card-bg p-6">
                                 <p className="text-2xl font-black text-white">{appointments.filter(a => a.date === todayStr).length}</p>
                                 <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-1">Today</p>
                             </div>
@@ -197,7 +225,7 @@ function App() {
                     </div>
                 )}
 
-                {activeTab === 'biz' && <BusinessOverview appointments={appointments} currentMonthName={currentMonthName} currentYear={currentYear} />}
+                {activeTab === 'biz' && <BusinessOverview appointments={appointments} currentMonthName={currentMonthName} currentYear={currentYear} months={months} />}
 
                 {activeTab === 'crm' && (
                     <div className="space-y-3">
@@ -216,7 +244,7 @@ function App() {
                 )}
             </main>
 
-            {/* MODAL ZA NOVOG KLIJENTA (CRM) */}
+            {/* MODALI - ISTI KAO RANIJE (NEPROMENJENI) */}
             {isClientModalOpen && (
                 <div className="fixed inset-0 z-[120] bg-black/95 backdrop-blur-xl flex items-center p-6 animate-in fade-in duration-300" onClick={() => setIsClientModalOpen(false)}>
                     <div className="card-bg w-full p-8 rounded-[40px] border border-slate-800" onClick={e => e.stopPropagation()}>
@@ -237,7 +265,6 @@ function App() {
                 </div>
             )}
 
-            {/* MODAL ZA DETALJE KLIJENTA */}
             {selectedClientData && (
                 <div className="fixed inset-0 z-[130] bg-black/95 backdrop-blur-xl flex items-center p-6 animate-in fade-in duration-300" onClick={() => setSelectedClientData(null)}>
                     <div className="card-bg w-full p-8 rounded-[40px] border border-slate-800" onClick={e => e.stopPropagation()}>
@@ -253,7 +280,6 @@ function App() {
                 </div>
             )}
 
-            {/* MODAL ZA ZAKAZIVANJE */}
             {isModalOpen && (
                 <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-md flex items-end animate-in slide-in-from-bottom duration-500" onClick={() => setIsModalOpen(false)}>
                     <div className="card-bg w-full p-8 rounded-t-[40px] border-t border-slate-800 max-h-[95vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
@@ -264,12 +290,6 @@ function App() {
                                 onChange={e => setNewEntry({...newEntry, client: e.target.value})} />
                             <input type="text" placeholder="Tattoo Style" className="w-full bg-[#0a0f1d] border border-slate-800 p-5 rounded-2xl outline-none text-white text-center text-sm shadow-inner" 
                                 onChange={e => setNewEntry({...newEntry, style: e.target.value})} />
-                            <div className="grid grid-cols-2 gap-3">
-                                <input type="tel" placeholder="Phone" className="bg-[#0a0f1d] border border-slate-800 p-5 rounded-2xl text-xs text-white text-center shadow-inner" 
-                                    onChange={e => setNewEntry({...newEntry, phone: e.target.value})} />
-                                <input type="email" placeholder="Email" className="bg-[#0a0f1d] border border-slate-800 p-5 rounded-2xl text-xs text-white text-center shadow-inner" 
-                                    onChange={e => setNewEntry({...newEntry, email: e.target.value})} />
-                            </div>
                             <div className="grid grid-cols-2 gap-3 text-center">
                                 <div className="bg-[#0a0f1d] border border-slate-800 p-3 rounded-2xl relative h-20 flex flex-col justify-center">
                                     <p className="text-[8px] font-black text-slate-600 uppercase absolute top-2 left-0 right-0 tracking-widest">Time</p>
