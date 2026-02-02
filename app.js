@@ -219,7 +219,7 @@ function App() {
                 <div className="flex flex-col">
                     <div className="flex items-baseline gap-2">
                         <h1 className="text-2xl font-black gold-text italic uppercase leading-none tracking-tighter">INKFLOW</h1>
-                        <span className="text-[7px] font-bold text-slate-500 uppercase tracking-widest">CLOUD PRO</span>
+                        <span className="text-[7px] font-bold text-slate-500 uppercase tracking-widest">BY DJAPE NOISE</span>
                     </div>
                     <p className="text-[9px] text-slate-600 font-bold uppercase tracking-[0.4em] mt-1">TATTOO MANAGEMENT</p>
                 </div>
