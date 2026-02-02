@@ -1,11 +1,48 @@
 const { useState, useEffect } = React;
 
-// --- POMOĆNA KOMPONENTA ZA BUSINESS TAB SA ANALIZOM ---
+// --- LOGIN KOMPONENTA (Samo za pristup, ne dira dizajn aplikacije) ---
+function AuthScreen({ onLogin }) {
+    const [isLogin, setIsLogin] = useState(true);
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+
+    const handleSubmit = () => {
+        if (!email || !password) return alert("Popunite polja!");
+        const users = JSON.parse(localStorage.getItem('inkflow_users') || '[]');
+        if (isLogin) {
+            const user = users.find(u => u.email === email && u.password === password);
+            if (user) onLogin(user);
+            else alert("Pogrešan email ili lozinka!");
+        } else {
+            if (users.find(u => u.email === email)) return alert("Email već postoji!");
+            const newUser = { email, password };
+            users.push(newUser);
+            localStorage.setItem('inkflow_users', JSON.stringify(users));
+            onLogin(newUser);
+        }
+    };
+
+    return (
+        <div className="min-h-screen bg-[#020617] flex items-center justify-center p-6 text-white font-sans">
+            <div className="card-bg w-full max-w-md p-10 rounded-[50px] border border-white/5 text-center shadow-2xl">
+                <h1 className="text-4xl font-black gold-text italic tracking-tighter mb-2">INKFLOW</h1>
+                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.4em] mb-12">Private Studio Access</p>
+                <div className="space-y-4">
+                    <input type="email" placeholder="Artist Email" className="w-full bg-[#0a0f1d] border border-white/5 p-5 rounded-3xl outline-none text-center font-bold" onChange={e => setEmail(e.target.value)} />
+                    <input type="password" placeholder="Password" className="w-full bg-[#0a0f1d] border border-white/5 p-5 rounded-3xl outline-none text-center font-bold" onChange={e => setPassword(e.target.value)} />
+                    <button onClick={handleSubmit} className="w-full gold-bg text-black font-black p-5 rounded-3xl uppercase tracking-widest mt-4 shadow-2xl"> {isLogin ? 'Login' : 'Sign Up'} </button>
+                    <button onClick={() => setIsLogin(!isLogin)} className="text-[9px] text-slate-600 font-bold uppercase mt-6 block mx-auto tracking-widest"> {isLogin ? 'Switch to Sign Up' : 'Switch to Login'} </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// --- POMOĆNA KOMPONENTA ZA BUSINESS TAB SA ANALIZOM (Tvoj originalni kod) ---
 function BusinessOverview({ appointments, currentMonthName, currentYear, months }) {
     const monthApps = appointments.filter(a => a.date.includes(currentMonthName) && a.date.includes(currentYear));
     const totalRev = monthApps.reduce((sum, a) => sum + (parseInt(a.price) || 0), 0);
     
-    // Analiza za celu godinu
     const yearlyStats = months.map(m => {
         const apps = appointments.filter(a => a.date.includes(m.name) && a.date.includes(currentYear));
         const rev = apps.reduce((sum, a) => sum + (parseInt(a.price) || 0), 0);
@@ -14,7 +51,6 @@ function BusinessOverview({ appointments, currentMonthName, currentYear, months 
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
-            {/* TRENUTNI MESEC */}
             <div className="card-bg p-8 border border-white/5 shadow-2xl relative overflow-hidden text-center">
                 <div className="absolute top-0 right-0 w-32 h-32 gold-bg opacity-5 blur-[50px] rounded-full"></div>
                 <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-2">Monthly Revenue</h3>
@@ -33,7 +69,6 @@ function BusinessOverview({ appointments, currentMonthName, currentYear, months 
                 </div>
             </div>
 
-            {/* ANALIZA SVIH MESECI - NOVO */}
             <div className="card-bg p-6 border border-white/5">
                 <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4 italic border-b border-white/5 pb-3 text-center">Yearly Performance ({currentYear})</h3>
                 <div className="max-h-[300px] overflow-y-auto no-scrollbar space-y-2">
@@ -56,8 +91,9 @@ function BusinessOverview({ appointments, currentMonthName, currentYear, months 
     );
 }
 
-// --- GLAVNA APLIKACIJA ---
+// --- GLAVNA APLIKACIJA (Tvoj originalni kod + Login logika) ---
 function App() {
+    const [user, setUser] = useState(() => JSON.parse(localStorage.getItem('inkflow_logged_user')));
     const [activeTab, setActiveTab] = useState('dash');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isClientModalOpen, setIsClientModalOpen] = useState(false);
@@ -67,21 +103,35 @@ function App() {
     const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
     const [selectedDate, setSelectedDate] = useState(new Date().getDate());
 
+    // Privatni ključevi za localStorage
+    const storageKeyApps = user ? `inkflow_apps_${user.email}` : 'guest_apps';
+    const storageKeyClients = user ? `inkflow_clients_${user.email}` : 'guest_clients';
+
     const [appointments, setAppointments] = useState(() => {
-        const saved = localStorage.getItem('inkflow_appointments');
+        const saved = localStorage.getItem(storageKeyApps);
         return saved ? JSON.parse(saved) : [];
     });
 
     const [clients, setClients] = useState(() => {
-        const saved = localStorage.getItem('inkflow_clients');
+        const saved = localStorage.getItem(storageKeyClients);
         return saved ? JSON.parse(saved) : [];
     });
 
     const [newEntry, setNewEntry] = useState({ client: '', time: '', date: '', price: '', phone: '', email: '', style: '' });
     const [newClient, setNewClient] = useState({ name: '', phone: '', email: '', social: '' });
 
-    useEffect(() => { localStorage.setItem('inkflow_appointments', JSON.stringify(appointments)); }, [appointments]);
-    useEffect(() => { localStorage.setItem('inkflow_clients', JSON.stringify(clients)); }, [clients]);
+    useEffect(() => { 
+        if(user) {
+            localStorage.setItem(storageKeyApps, JSON.stringify(appointments));
+            localStorage.setItem('inkflow_logged_user', JSON.stringify(user));
+        }
+    }, [appointments, user]);
+
+    useEffect(() => { 
+        if(user) localStorage.setItem(storageKeyClients, JSON.stringify(clients)); 
+    }, [clients, user]);
+
+    if (!user) return <AuthScreen onLogin={setUser} />;
 
     const months = [
         { name: "JANUAR", days: 31 }, { name: "FEBRUAR", days: 28 }, { name: "MART", days: 31 },
@@ -135,11 +185,14 @@ function App() {
             <header className="p-6 flex justify-between items-center">
                 <div>
                     <h1 className="text-2xl font-black gold-text italic uppercase leading-none tracking-tighter">INKFLOW PRO</h1>
-                    <p className="text-[10px] text-slate-600 font-bold uppercase tracking-[0.3em]">Management</p>
+                    <p className="text-[10px] text-slate-600 font-bold uppercase tracking-[0.3em]">Studio: {user.email.split('@')[0]}</p>
                 </div>
-                {activeTab === 'crm' && (
-                    <button onClick={() => setIsClientModalOpen(true)} className="gold-bg text-black px-6 py-2 rounded-full font-black text-[10px] uppercase shadow-lg active:scale-90 transition-transform">Add</button>
-                )}
+                <div className="flex gap-2">
+                    <button onClick={() => {localStorage.removeItem('inkflow_logged_user'); setUser(null);}} className="bg-slate-800 text-slate-400 p-2 rounded-full text-[8px] uppercase font-black">Out</button>
+                    {activeTab === 'crm' && (
+                        <button onClick={() => setIsClientModalOpen(true)} className="gold-bg text-black px-6 py-2 rounded-full font-black text-[10px] uppercase shadow-lg active:scale-90 transition-transform">Add</button>
+                    )}
+                </div>
             </header>
 
             <main className="p-4">
@@ -244,7 +297,7 @@ function App() {
                 )}
             </main>
 
-            {/* MODALI - ISTI KAO RANIJE (NEPROMENJENI) */}
+            {/* MODALI (Tvoj kod, bez promena) */}
             {isClientModalOpen && (
                 <div className="fixed inset-0 z-[120] bg-black/95 backdrop-blur-xl flex items-center p-6 animate-in fade-in duration-300" onClick={() => setIsClientModalOpen(false)}>
                     <div className="card-bg w-full p-8 rounded-[40px] border border-slate-800" onClick={e => e.stopPropagation()}>
