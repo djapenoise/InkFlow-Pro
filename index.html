@@ -11,10 +11,9 @@
     <link href="https://cdn.jsdelivr.net/npm/lucide-static@0.321.0/font/lucide.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; background-color: #0f172a; overflow-x: hidden; }
+        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; background-color: #0f172a; }
         .gold-text { color: #d4af37; }
         .gold-bg { background-color: #d4af37; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
     </style>
 </head>
 <body class="text-slate-100">
@@ -27,12 +26,8 @@
             const [activeTab, setActiveTab] = useState('dash');
             const [isModalOpen, setIsModalOpen] = useState(false);
             
-            // Glavna baza podataka u memoriji
-            const [appointments, setAppointments] = useState([
-                { id: 1, time: "14:00", client: "Marko Perić", service: "Full Sleeve", price: "350€" }
-            ]);
-
-            // Forma za novi termin
+            // Prazna lista na početku (nema više nasumičnih imena)
+            const [appointments, setAppointments] = useState([]);
             const [newApp, setNewApp] = useState({ client: '', time: '', price: '', service: '' });
 
             const addAppointment = () => {
@@ -45,105 +40,124 @@
 
             return (
                 <div className="min-h-screen pb-24">
+                    {/* HEADER */}
                     <header className="p-6 border-b border-slate-800 bg-[#1e293b]/80 backdrop-blur-lg sticky top-0 z-40 flex justify-between items-center">
-                        <h1 className="text-2xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-yellow-600 via-yellow-200 to-yellow-600 uppercase">
-                            InkFlow Pro
-                        </h1>
-                        <button 
-                            onClick={() => setIsModalOpen(true)}
-                            className="gold-bg text-black p-3 rounded-full shadow-lg active:scale-90 transition-all">
+                        <div className="flex items-center gap-3">
+                            {activeTab !== 'dash' && (
+                                <button onClick={() => setActiveTab('dash')} className="bg-slate-800 p-2 rounded-xl text-yellow-500">
+                                    <i className="lucide-home text-sm"></i>
+                                </button>
+                            )}
+                            <h1 className="text-xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-yellow-600 via-yellow-200 to-yellow-600 uppercase">
+                                {activeTab === 'dash' ? 'InkFlow Pro' : activeTab === 'crm' ? 'Clients' : 'Calendar'}
+                            </h1>
+                        </div>
+                        <button onClick={() => setIsModalOpen(true)} className="gold-bg text-black p-3 rounded-full shadow-lg active:scale-90 transition-all">
                             <i className="lucide-plus text-xl font-bold"></i>
                         </button>
                     </header>
 
                     <main className="p-4">
+                        {/* DASHBOARD */}
                         {activeTab === 'dash' && (
                             <div className="space-y-6 animate-in fade-in">
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="bg-[#1e293b] border border-slate-800 p-5 rounded-3xl text-center">
+                                <div className="grid grid-cols-2 gap-4 text-center">
+                                    <div className="bg-[#1e293b] border border-slate-800 p-6 rounded-[2.5rem]">
                                         <p className="text-3xl font-black gold-text">
                                             {appointments.reduce((acc, curr) => acc + parseInt(curr.price || 0), 0)}€
                                         </p>
-                                        <p className="text-[10px] text-slate-400 uppercase font-bold tracking-widest">Total Revenue</p>
+                                        <p className="text-[10px] text-slate-500 uppercase font-bold tracking-[0.2em] mt-1">Revenue</p>
                                     </div>
-                                    <div className="bg-[#1e293b] border border-slate-800 p-5 rounded-3xl text-center">
+                                    <div className="bg-[#1e293b] border border-slate-800 p-6 rounded-[2.5rem]">
                                         <p className="text-3xl font-black">{appointments.length}</p>
-                                        <p className="text-[10px] text-slate-400 uppercase font-bold tracking-widest">Sessions</p>
+                                        <p className="text-[10px] text-slate-500 uppercase font-bold tracking-[0.2em] mt-1">Sessions</p>
                                     </div>
                                 </div>
 
-                                <div className="bg-[#1e293b] border border-slate-800 rounded-3xl overflow-hidden shadow-2xl">
-                                    <div className="bg-slate-800/40 p-5 border-b border-slate-700">
-                                        <h3 className="font-bold text-xs tracking-widest uppercase">Upcoming</h3>
-                                    </div>
-                                    <div className="p-2 space-y-2">
-                                        {appointments.map(app => (
-                                            <div key={app.id} className="flex justify-between items-center bg-slate-900/40 p-4 rounded-2xl border-l-4 border-yellow-600">
-                                                <div>
-                                                    <p className="font-black">{app.client}</p>
-                                                    <p className="text-xs text-slate-500">{app.time} • {app.service}</p>
+                                <div className="bg-[#1e293b] border border-slate-800 rounded-[2.5rem] p-4 min-h-[150px] flex flex-col justify-center items-center">
+                                    {appointments.length === 0 ? (
+                                        <div className="text-center opacity-30 italic">
+                                            <i className="lucide-calendar-x text-4xl mb-2 block mx-auto"></i>
+                                            <p className="text-sm">No sessions scheduled</p>
+                                        </div>
+                                    ) : (
+                                        <div className="w-full space-y-3">
+                                            <p className="text-[10px] uppercase font-bold text-slate-500 mb-2 px-2 tracking-widest uppercase">Upcoming Today</p>
+                                            {appointments.map(app => (
+                                                <div key={app.id} className="flex justify-between items-center bg-slate-900/40 p-4 rounded-[1.5rem] border-l-2 border-yellow-600">
+                                                    <div>
+                                                        <p className="font-bold">{app.client}</p>
+                                                        <p className="text-[10px] text-slate-500 uppercase">{app.time} • {app.service}</p>
+                                                    </div>
+                                                    <p className="gold-text font-black">{app.price}</p>
                                                 </div>
-                                                <p className="gold-text font-black">{app.price}</p>
-                                            </div>
-                                        ))}
-                                    </div>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         )}
-                        
-                        {activeTab === 'cal' && <div className="p-10 text-center opacity-50 uppercase text-xs tracking-widest">Calendar View Active</div>}
-                        {activeTab === 'crm' && <div className="p-10 text-center opacity-50 uppercase text-xs tracking-widest">Client List Active</div>}
+
+                        {/* CALENDAR */}
+                        {activeTab === 'cal' && (
+                            <div className="animate-in fade-in space-y-4">
+                                <div className="bg-yellow-500/10 border border-yellow-500/20 p-4 rounded-2xl text-yellow-500 text-center text-xs font-bold uppercase tracking-widest">
+                                    Weekly View
+                                </div>
+                                {appointments.length === 0 && <p className="text-center p-20 text-slate-600 italic">No events found in calendar.</p>}
+                                {appointments.map(app => (
+                                    <div key={app.id} className="bg-[#1e293b] border border-slate-800 p-4 rounded-2xl flex justify-between">
+                                        <span>{app.time}</span>
+                                        <span className="font-bold">{app.client}</span>
+                                        <span className="gold-text">{app.price}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* CLIENTS */}
+                        {activeTab === 'crm' && (
+                            <div className="animate-in fade-in space-y-3">
+                                {appointments.length === 0 && <p className="text-center p-20 text-slate-600 italic">No clients in database.</p>}
+                                {[...new Set(appointments.map(a => a.client))].map(clientName => (
+                                    <div key={clientName} className="bg-[#1e293b] border border-slate-800 p-4 rounded-2xl flex justify-between items-center">
+                                        <p className="font-bold">{clientName}</p>
+                                        <div className="bg-slate-800 p-2 rounded-lg text-xs gold-text">Active</div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </main>
 
-                    {/* MODAL ZA DODAVANJE */}
+                    {/* MODAL */}
                     {isModalOpen && (
-                        <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-xl flex items-end sm:items-center justify-center animate-in fade-in duration-300">
-                            <div className="bg-[#1e293b] w-full max-w-lg rounded-t-[3rem] sm:rounded-[3rem] p-8 border-t border-slate-700 shadow-2xl animate-in slide-in-from-bottom-10">
-                                <div className="flex justify-between items-center mb-8">
-                                    <h2 className="text-2xl font-black gold-text">NEW SESSION</h2>
-                                    <button onClick={() => setIsModalOpen(false)} className="text-slate-500 p-2"><i className="lucide-x text-2xl"></i></button>
+                        <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center p-4">
+                            <div className="bg-[#1e293b] w-full max-w-lg rounded-[2.5rem] p-8 border border-slate-700 shadow-2xl">
+                                <div className="flex justify-between items-center mb-6">
+                                    <h2 className="text-xl font-black gold-text uppercase tracking-widest">New Entry</h2>
+                                    <button onClick={() => setIsModalOpen(false)}><i className="lucide-x text-2xl"></i></button>
                                 </div>
                                 <div className="space-y-4">
-                                    <input 
-                                        type="text" placeholder="Client Name" 
-                                        className="w-full bg-slate-900/50 border border-slate-700 p-4 rounded-2xl focus:border-yellow-600 outline-none"
-                                        onChange={(e) => setNewApp({...newApp, client: e.target.value})}
-                                    />
+                                    <input type="text" placeholder="Client Name" className="w-full bg-slate-900 border border-slate-800 p-4 rounded-2xl outline-none focus:border-yellow-600" onChange={(e) => setNewApp({...newApp, client: e.target.value})} />
                                     <div className="grid grid-cols-2 gap-4">
-                                        <input 
-                                            type="time" 
-                                            className="bg-slate-900/50 border border-slate-800 p-4 rounded-2xl outline-none"
-                                            onChange={(e) => setNewApp({...newApp, time: e.target.value})}
-                                        />
-                                        <input 
-                                            type="number" placeholder="Price (€)" 
-                                            className="bg-slate-900/50 border border-slate-800 p-4 rounded-2xl outline-none"
-                                            onChange={(e) => setNewApp({...newApp, price: e.target.value + '€'})}
-                                        />
+                                        <input type="time" className="bg-slate-900 border border-slate-800 p-4 rounded-2xl outline-none" onChange={(e) => setNewApp({...newApp, time: e.target.value})} />
+                                        <input type="number" placeholder="Price €" className="bg-slate-900 border border-slate-800 p-4 rounded-2xl outline-none" onChange={(e) => setNewApp({...newApp, price: e.target.value + '€'})} />
                                     </div>
-                                    <input 
-                                        type="text" placeholder="Service (e.g. Realism)" 
-                                        className="w-full bg-slate-900/50 border border-slate-700 p-4 rounded-2xl outline-none"
-                                        onChange={(e) => setNewApp({...newApp, service: e.target.value})}
-                                    />
-                                    <button 
-                                        onClick={addAppointment}
-                                        className="w-full gold-bg text-black font-black p-5 rounded-2xl shadow-xl active:scale-95 transition-all mt-4">
-                                        SAVE APPOINTMENT
-                                    </button>
+                                    <button onClick={addAppointment} className="w-full gold-bg text-black font-black p-5 rounded-2xl shadow-xl active:scale-95 transition-all uppercase tracking-widest">Save Session</button>
                                 </div>
                             </div>
                         </div>
                     )}
 
-                    <nav className="fixed bottom-6 left-6 right-6 bg-[#1e293b]/90 backdrop-blur-2xl border border-white/5 rounded-3xl flex justify-around p-4 shadow-2xl z-50">
+                    {/* NAV */}
+                    <nav className="fixed bottom-6 left-6 right-6 bg-[#1e293b]/90 backdrop-blur-2xl border border-white/5 rounded-[2.5rem] flex justify-around p-4 shadow-2xl z-50">
                         <button onClick={() => setActiveTab('dash')} className={`flex flex-col items-center gap-1 ${activeTab === 'dash' ? 'gold-text' : 'text-slate-500'}`}>
                             <i className="lucide-layout-dashboard text-2xl"></i>
                             <span className="text-[10px] font-bold uppercase tracking-tighter">Home</span>
                         </button>
                         <button onClick={() => setActiveTab('cal')} className={`flex flex-col items-center gap-1 ${activeTab === 'cal' ? 'gold-text' : 'text-slate-500'}`}>
                             <i className="lucide-calendar text-2xl"></i>
-                            <span className="text-[10px] font-bold uppercase tracking-tighter">Events</span>
+                            <span className="text-[10px] font-bold uppercase tracking-tighter">Calendar</span>
                         </button>
                         <button onClick={() => setActiveTab('crm')} className={`flex flex-col items-center gap-1 ${activeTab === 'crm' ? 'gold-text' : 'text-slate-500'}`}>
                             <i className="lucide-users text-2xl"></i>
@@ -159,6 +173,7 @@
     </script>
 </body>
 </html>
+
 
 
 
