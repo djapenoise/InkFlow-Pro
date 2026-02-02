@@ -149,3 +149,10 @@ function App() {
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(<App />);
+{/* Ubaci ovo u main deo tvog app.js */}
+{activeTab === 'biz' && (
+    <BusinessOverview 
+        appointments={appointments} 
+        currentMonthName={months[currentMonthIdx].name} 
+    />
+)}
