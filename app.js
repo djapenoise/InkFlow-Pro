@@ -64,7 +64,7 @@ function App() {
         return saved ? JSON.parse(saved) : [];
     });
 
-    const [newEntry, setNewEntry] = useState({ client: '', time: '', date: '', price: '', phone: '', email: '', style: '' });
+    const [newEntry, setNewEntry] = useState({ client: '', time: '', price: '', style: '', phone: '', email: '' });
     const [newClient, setNewClient] = useState({ name: '', phone: '', email: '', social: '' });
 
     useEffect(() => {
@@ -111,7 +111,7 @@ function App() {
         }
         setAppointments([...appointments, { ...newEntry, date: fullDate, id: appId + 1 }]);
         setIsModalOpen(false);
-        setNewEntry({ client: '', time: '', date: '', price: '', phone: '', email: '', style: '' });
+        setNewEntry({ client: '', time: '', price: '', style: '', phone: '', email: '' });
     };
 
     const handleAddClient = () => {
@@ -132,9 +132,6 @@ function App() {
                     <p className="text-[10px] text-slate-600 font-bold uppercase tracking-[0.3em] mt-1">Tattoo Management</p>
                 </div>
                 <div className="flex gap-2">
-                    {activeTab === 'crm' && (
-                        <button onClick={() => setIsClientModalOpen(true)} className="gold-bg text-black px-4 py-2 rounded-full font-black text-[10px] uppercase">Add</button>
-                    )}
                     <button onClick={() => {localStorage.removeItem('inkflow_logged_user'); setUser(null);}} className="bg-slate-800 text-slate-400 px-3 py-2 rounded-full font-black text-[8px] uppercase">Logout</button>
                 </div>
             </header>
@@ -212,7 +209,8 @@ function App() {
 
                 {activeTab === 'biz' && (
                     <div className="space-y-6">
-                        <div className="card-bg p-8 text-center border border-white/5 shadow-2xl">
+                        <div className="card-bg p-8 text-center border border-white/5 shadow-2xl relative overflow-hidden">
+                             <div className="absolute top-0 right-0 w-32 h-32 gold-bg opacity-5 blur-[50px] rounded-full"></div>
                              <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-2">Monthly Revenue</h3>
                              <p className="text-5xl font-black gold-text italic tracking-tighter">{appointments.filter(a => a.date.includes(currentMonthName) && a.date.includes(currentYear)).reduce((s, b) => s + (parseInt(b.price) || 0), 0)}€</p>
                              <p className="text-[10px] text-slate-600 font-bold mt-4 uppercase tracking-widest">{currentMonthName} {currentYear}</p>
@@ -220,11 +218,15 @@ function App() {
                         <div className="card-bg p-6">
                             <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4 italic border-b border-white/5 pb-3 text-center">Yearly Performance ({currentYear})</h3>
                             {months.map(m => {
-                                const rev = appointments.filter(a => a.date.includes(m.name) && a.date.includes(currentYear)).reduce((s, a) => s + (parseInt(a.price) || 0), 0);
+                                const mApps = appointments.filter(a => a.date.includes(m.name) && a.date.includes(currentYear));
+                                const mRev = mApps.reduce((s, a) => s + (parseInt(a.price) || 0), 0);
                                 return (
                                     <div key={m.name} className={`flex justify-between items-center p-3 mb-2 rounded-xl ${m.name === currentMonthName ? 'bg-yellow-500/10' : 'bg-[#0a0f1d]'}`}>
-                                        <span className="text-[10px] font-black text-slate-500 uppercase">{m.name}</span>
-                                        <span className="font-black text-white text-xs">{rev}€</span>
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-[9px] font-black text-slate-500 uppercase">{m.name.slice(0, 3)}</span>
+                                            <span className="text-[9px] text-slate-600 font-bold uppercase">{mApps.length} SESS.</span>
+                                        </div>
+                                        <span className="font-black text-white text-xs">{mRev}€</span>
                                     </div>
                                 )
                             })}
@@ -234,51 +236,84 @@ function App() {
 
                 {activeTab === 'crm' && (
                     <div className="space-y-3">
+                        <div className="flex justify-between items-center mb-4 px-2">
+                             <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Client Database</h3>
+                             <button onClick={() => setIsClientModalOpen(true)} className="gold-bg text-black px-4 py-1.5 rounded-full font-black text-[10px] uppercase shadow-lg">Add New</button>
+                        </div>
                         {clients.map(c => (
-                            <div key={c.id} className="card-bg p-5 flex justify-between items-center border border-slate-800 shadow-md">
-                                <div className="flex items-center gap-4" onClick={() => setSelectedClientData(c)}>
+                            <div key={c.id} className="card-bg p-5 flex justify-between items-center border border-slate-800 shadow-md active:scale-95 transition-all" onClick={() => setSelectedClientData(c)}>
+                                <div className="flex items-center gap-4">
                                     <div className="w-10 h-10 gold-bg rounded-full flex items-center justify-center text-black font-black">{c.name[0]}</div>
-                                    <div><p className="font-bold text-white">{c.name}</p><p className="text-[9px] text-slate-500 font-black uppercase">{c.social || '@ink_client'}</p></div>
+                                    <div><p className="font-bold text-white">{c.name}</p><p className="text-[9px] text-slate-500 font-black uppercase">{c.social || '@no_instagram'}</p></div>
                                 </div>
-                                <button onClick={() => setClients(clients.filter(cl => cl.id !== c.id))} className="p-3 opacity-30">🗑️</button>
+                                <button onClick={(e) => {e.stopPropagation(); setClients(clients.filter(cl => cl.id !== c.id))}} className="p-2 opacity-20">🗑️</button>
                             </div>
                         ))}
                     </div>
                 )}
             </main>
 
-            {/* MODAL ZA NOVOG KLIJENTA */}
+            {/* MODAL ZA NOVOG KLIJENTA (CRM) */}
             {isClientModalOpen && (
                 <div className="fixed inset-0 z-[120] bg-black/95 backdrop-blur-xl flex items-center p-6" onClick={() => setIsClientModalOpen(false)}>
-                    <div className="card-bg w-full p-8 rounded-[40px] border border-slate-800" onClick={e => e.stopPropagation()}>
-                        <h2 className="text-xl font-black gold-text uppercase italic mb-8 text-center">New Client</h2>
-                        <div className="space-y-4">
-                            <input type="text" placeholder="Full Name" className="w-full bg-[#0a0f1d] border border-slate-800 p-5 rounded-2xl outline-none text-white text-center" onChange={e => setNewClient({...newClient, name: e.target.value})} />
-                            <input type="text" placeholder="Instagram @tag" className="w-full bg-[#0a0f1d] border border-slate-800 p-5 rounded-2xl outline-none text-white text-center text-sm" onChange={e => setNewClient({...newClient, social: e.target.value})} />
-                            <button onClick={handleAddClient} className="w-full gold-bg text-black font-black p-5 rounded-2xl uppercase tracking-widest mt-6">Save Profile</button>
+                    <div className="card-bg w-full p-8 rounded-[40px] border border-slate-800 shadow-2xl" onClick={e => e.stopPropagation()}>
+                        <h2 className="text-xl font-black gold-text uppercase italic mb-8 text-center">New Client Profile</h2>
+                        <div className="space-y-3">
+                            <input type="text" placeholder="Full Name" className="w-full bg-[#0a0f1d] border border-slate-800 p-4 rounded-2xl outline-none text-white text-center font-bold" onChange={e => setNewClient({...newClient, name: e.target.value})} />
+                            <input type="tel" placeholder="Phone Number" className="w-full bg-[#0a0f1d] border border-slate-800 p-4 rounded-2xl outline-none text-white text-center text-sm" onChange={e => setNewClient({...newClient, phone: e.target.value})} />
+                            <input type="email" placeholder="Email Address" className="w-full bg-[#0a0f1d] border border-slate-800 p-4 rounded-2xl outline-none text-white text-center text-sm" onChange={e => setNewClient({...newClient, email: e.target.value})} />
+                            <input type="text" placeholder="Instagram @tag" className="w-full bg-[#0a0f1d] border border-slate-800 p-4 rounded-2xl outline-none text-white text-center text-sm" onChange={e => setNewClient({...newClient, social: e.target.value})} />
+                            <button onClick={handleAddClient} className="w-full gold-bg text-black font-black p-5 rounded-2xl uppercase tracking-widest mt-6 shadow-2xl active:scale-95 transition-all">Save Profile</button>
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* MODAL ZA ZAKAZIVANJE */}
+            {/* DETALJI KLIJENTA MODAL */}
+            {selectedClientData && (
+                <div className="fixed inset-0 z-[130] bg-black/95 backdrop-blur-xl flex items-center p-6" onClick={() => setSelectedClientData(null)}>
+                    <div className="card-bg w-full p-8 rounded-[40px] border border-slate-800 shadow-2xl" onClick={e => e.stopPropagation()}>
+                        <div className="w-20 h-20 gold-bg rounded-full mx-auto flex items-center justify-center text-black text-3xl font-black mb-6 shadow-2xl">{selectedClientData.name[0]}</div>
+                        <h2 className="text-2xl font-black text-center text-white uppercase mb-2 italic">{selectedClientData.name}</h2>
+                        <p className="text-center gold-text font-bold text-[10px] mb-8 tracking-[0.3em] uppercase">{selectedClientData.social || '@no_tag'}</p>
+                        <div className="space-y-4 bg-[#0a0f1d] p-6 rounded-3xl border border-slate-800 text-center shadow-inner">
+                            <div><p className="text-slate-600 text-[8px] font-black uppercase">Phone</p><p className="text-white font-bold">{selectedClientData.phone || '—'}</p></div>
+                            <div><p className="text-slate-600 text-[8px] font-black uppercase">Email</p><p className="text-white font-bold text-xs">{selectedClientData.email || '—'}</p></div>
+                        </div>
+                        <button onClick={() => setSelectedClientData(null)} className="w-full bg-slate-800 text-slate-500 font-black p-4 rounded-2xl uppercase tracking-widest text-[10px] mt-6">Close</button>
+                    </div>
+                </div>
+            )}
+
+            {/* MODAL ZA ZAKAZIVANJE (CALENDAR) */}
             {isModalOpen && (
                 <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-md flex items-end" onClick={() => setIsModalOpen(false)}>
-                    <div className="card-bg w-full p-8 rounded-t-[40px] border-t border-slate-800 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-                        <h2 className="text-xl font-black gold-text uppercase italic mb-8 text-center">{selectedDate}. {currentMonthName}</h2>
+                    <div className="card-bg w-full p-8 rounded-t-[40px] border-t border-slate-800 max-h-[90vh] overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
+                        <div className="w-12 h-1 bg-slate-800 mx-auto mb-8 rounded-full"></div>
+                        <h2 className="text-xl font-black gold-text uppercase italic mb-8 text-center">{selectedDate}. {currentMonthName} {currentYear}</h2>
                         <div className="space-y-4">
                             <input type="text" placeholder="Client Name" className="w-full bg-[#0a0f1d] border border-slate-800 p-5 rounded-2xl outline-none font-bold text-white text-center" onChange={e => setNewEntry({...newEntry, client: e.target.value})} />
+                            <input type="text" placeholder="Tattoo Style (e.g. Realism)" className="w-full bg-[#0a0f1d] border border-slate-800 p-5 rounded-2xl outline-none text-white text-center text-sm shadow-inner" onChange={e => setNewEntry({...newEntry, style: e.target.value})} />
+                            
                             <div className="grid grid-cols-2 gap-3 text-center">
-                                <div className="bg-[#0a0f1d] border border-slate-800 p-3 rounded-2xl relative h-20 flex flex-col justify-center">
-                                    <p className="text-[8px] font-black text-slate-600 uppercase absolute top-2 left-0 right-0">Time</p>
-                                    <input type="time" className="bg-transparent font-black text-yellow-500 text-center outline-none text-lg mt-2" onChange={e => setNewEntry({...newEntry, time: e.target.value})} />
+                                <div className="bg-[#0a0f1d] border border-slate-800 p-4 rounded-2xl relative">
+                                    <p className="text-[8px] font-black text-slate-600 uppercase mb-2">Time</p>
+                                    <input type="time" className="bg-transparent font-black text-yellow-500 text-center outline-none text-lg" onChange={e => setNewEntry({...newEntry, time: e.target.value})} />
                                 </div>
-                                <div className="bg-[#0a0f1d] border border-slate-800 p-3 rounded-2xl relative h-20 flex flex-col justify-center">
-                                    <p className="text-[8px] font-black text-slate-600 uppercase absolute top-2 left-0 right-0">Price</p>
-                                    <input type="number" placeholder="0€" className="bg-transparent font-black text-white text-center outline-none text-lg mt-2" onChange={e => setNewEntry({...newEntry, price: e.target.value + '€'})} />
+                                <div className="bg-[#0a0f1d] border border-slate-800 p-4 rounded-2xl relative">
+                                    <p className="text-[8px] font-black text-slate-600 uppercase mb-2">Price (€)</p>
+                                    <input type="number" placeholder="0" className="w-full bg-transparent font-black text-white text-center outline-none text-lg" onChange={e => setNewEntry({...newEntry, price: e.target.value + '€'})} />
                                 </div>
                             </div>
-                            <button onClick={handleSaveAppointment} className="w-full gold-bg text-black font-black p-5 rounded-2xl uppercase tracking-widest mt-6">Confirm Session</button>
+
+                            <div className="space-y-3 pt-4 border-t border-white/5">
+                                <p className="text-[8px] font-black text-slate-600 uppercase text-center tracking-widest">Quick Contact Save</p>
+                                <input type="tel" placeholder="Phone Number" className="w-full bg-[#0a0f1d] border border-slate-800 p-4 rounded-2xl outline-none text-white text-center text-xs" onChange={e => setNewEntry({...newEntry, phone: e.target.value})} />
+                                <input type="email" placeholder="Email Address" className="w-full bg-[#0a0f1d] border border-slate-800 p-4 rounded-2xl outline-none text-white text-center text-xs" onChange={e => setNewEntry({...newEntry, email: e.target.value})} />
+                            </div>
+
+                            <button onClick={handleSaveAppointment} className="w-full gold-bg text-black font-black p-5 rounded-2xl uppercase tracking-widest mt-6 shadow-2xl active:scale-95 transition-all">Confirm Session</button>
+                            <button onClick={() => setIsModalOpen(false)} className="w-full text-slate-600 font-black p-2 uppercase tracking-widest text-[9px] mt-2">Cancel</button>
                         </div>
                     </div>
                 </div>
