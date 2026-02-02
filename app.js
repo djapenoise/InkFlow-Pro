@@ -3,6 +3,7 @@ const { useState } = React;
 function App() {
     const [activeTab, setActiveTab] = useState('dash');
     const [isModalOpen, setIsModalOpen] = useState(false);
+    // Postavljamo početni mesec na FEBRUAR (indeks 1)
     const [currentMonthIdx, setCurrentMonthIdx] = useState(1); 
     
     const months = [
@@ -33,33 +34,33 @@ function App() {
 
     return (
         <div className="min-h-screen pb-32">
-            {/* Header */}
             <header className="p-6 flex justify-between items-center">
                 <div>
                     <h1 className="text-2xl font-black gold-text italic tracking-tight uppercase">INKFLOW PRO</h1>
                     <p className="text-[10px] text-slate-500 font-bold tracking-widest uppercase">Tattoo Management</p>
                 </div>
-                {activeTab !== 'dash' && (
+                {/* Sakrivamo ADD dugme kada smo na Business tabu */}
+                {activeTab !== 'dash' && activeTab !== 'biz' && (
                     <button onClick={() => setIsModalOpen(true)} className="gold-bg text-black px-6 py-2 rounded-full font-black text-xs uppercase tracking-widest">ADD</button>
                 )}
             </header>
 
-            {/* Main Content - Tabs */}
             <main className="p-4">
+                {/* 1. HOME / DASHBOARD TAB */}
                 {activeTab === 'dash' && (
                     <div className="space-y-6">
                         <div className="grid grid-cols-2 gap-4">
                             <div className="card-bg p-6 shadow-lg">
                                 <p className="text-2xl font-black gold-text">{appointments.reduce((a, b) => a + parseInt(b.price || 0), 0)}€</p>
-                                <p className="text-[10px] text-slate-500 font-bold uppercase mt-1">Monthly Revenue</p>
+                                <p className="text-[10px] text-slate-500 font-bold uppercase mt-1">Total Revenue</p>
                             </div>
                             <div className="card-bg p-6 shadow-lg">
                                 <p className="text-2xl font-black">{clients.length}</p>
-                                <p className="text-[10px] text-slate-500 font-bold uppercase mt-1">Active Clients</p>
+                                <p className="text-[10px] text-slate-500 font-bold uppercase mt-1">Total Clients</p>
                             </div>
                         </div>
                         <div className="card-bg p-6">
-                            <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 italic">Today's Sessions</h3>
+                            <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 italic text-center">Upcoming Sessions</h3>
                             {appointments.length === 0 ? <p className="text-center opacity-20 py-10 italic">No sessions yet</p> : 
                                 appointments.map(app => (
                                     <div key={app.id} className="bg-[#0f172a] p-4 rounded-2xl mb-3 flex justify-between items-center border-l-4 border-yellow-500">
@@ -72,6 +73,7 @@ function App() {
                     </div>
                 )}
 
+                {/* 2. CALENDAR TAB */}
                 {activeTab === 'cal' && (
                     <div className="space-y-6">
                         <div className="card-bg p-6 shadow-2xl">
@@ -98,6 +100,15 @@ function App() {
                     </div>
                 )}
 
+                {/* 3. BUSINESS TAB (Poziva komponentu iz business.js) */}
+                {activeTab === 'biz' && (
+                    <BusinessOverview 
+                        appointments={appointments} 
+                        currentMonthName={months[currentMonthIdx].name} 
+                    />
+                )}
+
+                {/* 4. CLIENTS TAB */}
                 {activeTab === 'crm' && (
                     <div className="space-y-3">
                         {clients.map(c => (
@@ -113,7 +124,7 @@ function App() {
                 )}
             </main>
 
-            {/* Modal - Bez boksa sa datumom */}
+            {/* MODAL ZA UNOS */}
             {isModalOpen && (
                 <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md flex items-end justify-center" onClick={() => setIsModalOpen(false)}>
                     <div className="card-bg w-full max-w-lg p-8 rounded-b-none border-t border-slate-700 shadow-2xl" onClick={e => e.stopPropagation()}>
@@ -137,11 +148,12 @@ function App() {
                 </div>
             )}
 
-            {/* Bottom Nav */}
-            <nav className="fixed bottom-8 left-8 right-8 card-bg border border-white/5 flex justify-around p-5 shadow-2xl z-50">
-                <button onClick={() => setActiveTab('dash')} className={`text-[10px] font-black uppercase tracking-widest ${activeTab === 'dash' ? 'gold-text' : 'text-slate-600'}`}>Home</button>
-                <button onClick={() => setActiveTab('cal')} className={`text-[10px] font-black uppercase tracking-widest ${activeTab === 'cal' ? 'gold-text' : 'text-slate-600'}`}>Calendar</button>
-                <button onClick={() => setActiveTab('crm')} className={`text-[10px] font-black uppercase tracking-widest ${activeTab === 'crm' ? 'gold-text' : 'text-slate-600'}`}>Clients</button>
+            {/* NAVBAR SA 4 OPCIJE */}
+            <nav className="fixed bottom-8 left-6 right-6 card-bg border border-white/5 flex justify-around p-4 shadow-2xl z-50">
+                <button onClick={() => setActiveTab('dash')} className={`text-[9px] font-black uppercase tracking-widest ${activeTab === 'dash' ? 'gold-text' : 'text-slate-600'}`}>Home</button>
+                <button onClick={() => setActiveTab('cal')} className={`text-[9px] font-black uppercase tracking-widest ${activeTab === 'cal' ? 'gold-text' : 'text-slate-600'}`}>Calendar</button>
+                <button onClick={() => setActiveTab('biz')} className={`text-[9px] font-black uppercase tracking-widest ${activeTab === 'biz' ? 'gold-text' : 'text-slate-600'}`}>Business</button>
+                <button onClick={() => setActiveTab('crm')} className={`text-[9px] font-black uppercase tracking-widest ${activeTab === 'crm' ? 'gold-text' : 'text-slate-600'}`}>Clients</button>
             </nav>
         </div>
     );
