@@ -11,7 +11,7 @@
     <link href="https://cdn.jsdelivr.net/npm/lucide-static@0.321.0/font/lucide.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; background-color: #0f172a; }
+        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; background-color: #0f172a; overflow-x: hidden; }
         .gold-text { color: #d4af37; }
         .gold-bg { background-color: #d4af37; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -25,116 +25,117 @@
 
         function App() {
             const [activeTab, setActiveTab] = useState('dash');
-            const [selectedDate, setSelectedDate] = useState(2); // Danas (ponedeljak)
+            const [isModalOpen, setIsModalOpen] = useState(false);
+            
+            // Glavna baza podataka u memoriji
+            const [appointments, setAppointments] = useState([
+                { id: 1, time: "14:00", client: "Marko Perić", service: "Full Sleeve", price: "350€" }
+            ]);
 
-            const days = [
-                { d: 'S', n: 1 }, { d: 'M', n: 2 }, { d: 'T', n: 3 }, 
-                { d: 'W', n: 4 }, { d: 'T', n: 5 }, { d: 'F', n: 6 }, { d: 'S', n: 7 }
-            ];
+            // Forma za novi termin
+            const [newApp, setNewApp] = useState({ client: '', time: '', price: '', service: '' });
 
-            const appointments = [
-                { id: 1, time: "10:00", client: "Nikola Tepić", service: "Portrait", price: "200€", status: "Done" },
-                { id: 2, time: "14:00", client: "Marko Perić", service: "Full Sleeve", price: "350€", status: "Next" },
-                { id: 3, time: "18:30", client: "Jovana Ivić", service: "Small Tattoo", price: "80€", status: "Pending" }
-            ];
-
-            const clients = [
-                { id: 1, name: "Marko Perić", style: "Realism", phone: "+38160123456" },
-                { id: 2, name: "Ana Lukić", style: "Minimalism", phone: "+38160987654" }
-            ];
+            const addAppointment = () => {
+                if (newApp.client && newApp.time) {
+                    setAppointments([...appointments, { ...newApp, id: Date.now() }]);
+                    setIsModalOpen(false);
+                    setNewApp({ client: '', time: '', price: '', service: '' });
+                }
+            };
 
             return (
                 <div className="min-h-screen pb-24">
-                    <header className="p-6 border-b border-slate-800 bg-[#1e293b]/80 backdrop-blur-lg sticky top-0 z-50 flex justify-between items-center">
+                    <header className="p-6 border-b border-slate-800 bg-[#1e293b]/80 backdrop-blur-lg sticky top-0 z-40 flex justify-between items-center">
                         <h1 className="text-2xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-yellow-600 via-yellow-200 to-yellow-600 uppercase">
-                            {activeTab === 'dash' ? 'Dashboard' : activeTab === 'crm' ? 'Clients' : 'Calendar'}
+                            InkFlow Pro
                         </h1>
-                        <button className="gold-bg text-black p-3 rounded-full shadow-lg active:scale-90 transition-all">
+                        <button 
+                            onClick={() => setIsModalOpen(true)}
+                            className="gold-bg text-black p-3 rounded-full shadow-lg active:scale-90 transition-all">
                             <i className="lucide-plus text-xl font-bold"></i>
                         </button>
                     </header>
 
                     <main className="p-4">
-                        {/* DASHBOARD TAB */}
                         {activeTab === 'dash' && (
-                            <div className="space-y-6 animate-in fade-in duration-500">
+                            <div className="space-y-6 animate-in fade-in">
                                 <div className="grid grid-cols-2 gap-4">
-                                    <div className="bg-[#1e293b] border border-slate-800 p-5 rounded-3xl">
-                                        <p className="text-3xl font-black gold-text">1.250€</p>
-                                        <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Revenue</p>
+                                    <div className="bg-[#1e293b] border border-slate-800 p-5 rounded-3xl text-center">
+                                        <p className="text-3xl font-black gold-text">
+                                            {appointments.reduce((acc, curr) => acc + parseInt(curr.price || 0), 0)}€
+                                        </p>
+                                        <p className="text-[10px] text-slate-400 uppercase font-bold tracking-widest">Total Revenue</p>
                                     </div>
-                                    <div className="bg-[#1e293b] border border-slate-800 p-5 rounded-3xl">
-                                        <p className="text-3xl font-black">24</p>
-                                        <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Clients</p>
+                                    <div className="bg-[#1e293b] border border-slate-800 p-5 rounded-3xl text-center">
+                                        <p className="text-3xl font-black">{appointments.length}</p>
+                                        <p className="text-[10px] text-slate-400 uppercase font-bold tracking-widest">Sessions</p>
                                     </div>
-                                </div>
-                                <div className="bg-[#1e293b] border border-slate-800 rounded-3xl p-5 shadow-2xl">
-                                    <h3 className="font-bold text-xs tracking-widest uppercase mb-4 opacity-50">Next Session</h3>
-                                    <div className="flex justify-between items-center">
-                                        <div>
-                                            <p className="text-xl font-black">Marko Perić</p>
-                                            <p className="text-sm gold-text font-bold">Today, 14:00</p>
-                                        </div>
-                                        <i className="lucide-chevron-right text-slate-700"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* CALENDAR TAB */}
-                        {activeTab === 'cal' && (
-                            <div className="animate-in fade-in duration-500 space-y-6">
-                                {/* Horizontalni dani */}
-                                <div className="flex justify-between bg-[#1e293b] p-4 rounded-3xl border border-slate-800 shadow-inner overflow-x-auto no-scrollbar">
-                                    {days.map(day => (
-                                        <button 
-                                            key={day.n}
-                                            onClick={() => setSelectedDate(day.n)}
-                                            className={`flex flex-col items-center p-3 rounded-2xl min-w-[45px] transition-all ${selectedDate === day.n ? 'gold-bg text-black font-bold scale-110 shadow-lg' : 'text-slate-500'}`}
-                                        >
-                                            <span className="text-[10px] uppercase">{day.d}</span>
-                                            <span className="text-lg">{day.n}</span>
-                                        </button>
-                                    ))}
                                 </div>
 
-                                {/* Timeline */}
-                                <div className="space-y-4">
-                                    {appointments.map(app => (
-                                        <div key={app.id} className="flex gap-4 group">
-                                            <div className="flex flex-col items-center">
-                                                <p className="text-xs font-bold text-slate-500">{app.time}</p>
-                                                <div className="w-[2px] flex-grow bg-slate-800 my-2"></div>
-                                            </div>
-                                            <div className="flex-grow bg-[#1e293b] border border-slate-800 p-4 rounded-2xl mb-2 active:bg-slate-800 transition-all">
-                                                <div className="flex justify-between items-start">
-                                                    <div>
-                                                        <p className="font-black">{app.client}</p>
-                                                        <p className="text-[10px] text-slate-400 uppercase tracking-widest">{app.service}</p>
-                                                    </div>
-                                                    <p className="gold-text font-bold text-sm">{app.price}</p>
+                                <div className="bg-[#1e293b] border border-slate-800 rounded-3xl overflow-hidden shadow-2xl">
+                                    <div className="bg-slate-800/40 p-5 border-b border-slate-700">
+                                        <h3 className="font-bold text-xs tracking-widest uppercase">Upcoming</h3>
+                                    </div>
+                                    <div className="p-2 space-y-2">
+                                        {appointments.map(app => (
+                                            <div key={app.id} className="flex justify-between items-center bg-slate-900/40 p-4 rounded-2xl border-l-4 border-yellow-600">
+                                                <div>
+                                                    <p className="font-black">{app.client}</p>
+                                                    <p className="text-xs text-slate-500">{app.time} • {app.service}</p>
                                                 </div>
+                                                <p className="gold-text font-black">{app.price}</p>
                                             </div>
-                                        </div>
-                                    ))}
+                                        ))}
+                                    </div>
                                 </div>
                             </div>
                         )}
-
-                        {/* CLIENTS TAB */}
-                        {activeTab === 'crm' && (
-                            <div className="animate-in fade-in duration-500 space-y-3">
-                                {clients.map(c => (
-                                    <div key={c.id} className="bg-[#1e293b] border border-slate-800 p-4 rounded-2xl flex justify-between items-center">
-                                        <p className="font-bold">{c.name}</p>
-                                        <a href={`tel:${c.phone}`} className="bg-slate-800 p-2 rounded-full text-yellow-500"><i className="lucide-phone"></i></a>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
+                        
+                        {activeTab === 'cal' && <div className="p-10 text-center opacity-50 uppercase text-xs tracking-widest">Calendar View Active</div>}
+                        {activeTab === 'crm' && <div className="p-10 text-center opacity-50 uppercase text-xs tracking-widest">Client List Active</div>}
                     </main>
 
-                    {/* NAVIGATION */}
+                    {/* MODAL ZA DODAVANJE */}
+                    {isModalOpen && (
+                        <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-xl flex items-end sm:items-center justify-center animate-in fade-in duration-300">
+                            <div className="bg-[#1e293b] w-full max-w-lg rounded-t-[3rem] sm:rounded-[3rem] p-8 border-t border-slate-700 shadow-2xl animate-in slide-in-from-bottom-10">
+                                <div className="flex justify-between items-center mb-8">
+                                    <h2 className="text-2xl font-black gold-text">NEW SESSION</h2>
+                                    <button onClick={() => setIsModalOpen(false)} className="text-slate-500 p-2"><i className="lucide-x text-2xl"></i></button>
+                                </div>
+                                <div className="space-y-4">
+                                    <input 
+                                        type="text" placeholder="Client Name" 
+                                        className="w-full bg-slate-900/50 border border-slate-700 p-4 rounded-2xl focus:border-yellow-600 outline-none"
+                                        onChange={(e) => setNewApp({...newApp, client: e.target.value})}
+                                    />
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <input 
+                                            type="time" 
+                                            className="bg-slate-900/50 border border-slate-800 p-4 rounded-2xl outline-none"
+                                            onChange={(e) => setNewApp({...newApp, time: e.target.value})}
+                                        />
+                                        <input 
+                                            type="number" placeholder="Price (€)" 
+                                            className="bg-slate-900/50 border border-slate-800 p-4 rounded-2xl outline-none"
+                                            onChange={(e) => setNewApp({...newApp, price: e.target.value + '€'})}
+                                        />
+                                    </div>
+                                    <input 
+                                        type="text" placeholder="Service (e.g. Realism)" 
+                                        className="w-full bg-slate-900/50 border border-slate-700 p-4 rounded-2xl outline-none"
+                                        onChange={(e) => setNewApp({...newApp, service: e.target.value})}
+                                    />
+                                    <button 
+                                        onClick={addAppointment}
+                                        className="w-full gold-bg text-black font-black p-5 rounded-2xl shadow-xl active:scale-95 transition-all mt-4">
+                                        SAVE APPOINTMENT
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     <nav className="fixed bottom-6 left-6 right-6 bg-[#1e293b]/90 backdrop-blur-2xl border border-white/5 rounded-3xl flex justify-around p-4 shadow-2xl z-50">
                         <button onClick={() => setActiveTab('dash')} className={`flex flex-col items-center gap-1 ${activeTab === 'dash' ? 'gold-text' : 'text-slate-500'}`}>
                             <i className="lucide-layout-dashboard text-2xl"></i>
@@ -158,5 +159,6 @@
     </script>
 </body>
 </html>
+
 
 
