@@ -7,18 +7,18 @@ function BusinessOverview({ appointments, currentMonthName, currentYear }) {
     
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
-            <div className="card-bg p-8 border border-white/5 shadow-2xl relative overflow-hidden">
+            <div className="card-bg p-8 border border-white/5 shadow-2xl relative overflow-hidden text-center">
                 <div className="absolute top-0 right-0 w-32 h-32 gold-bg opacity-5 blur-[50px] rounded-full"></div>
-                <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-2 text-center">Monthly Revenue</h3>
-                <p className="text-5xl font-black gold-text italic tracking-tighter text-center">{totalRev}€</p>
-                <p className="text-[10px] text-slate-600 font-bold mt-4 uppercase tracking-widest text-center">{currentMonthName} {currentYear}</p>
+                <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-2">Monthly Revenue</h3>
+                <p className="text-5xl font-black gold-text italic tracking-tighter">{totalRev}€</p>
+                <p className="text-[10px] text-slate-600 font-bold mt-4 uppercase tracking-widest">{currentMonthName} {currentYear}</p>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-                <div className="card-bg p-6 border border-white/5 text-center">
+            <div className="grid grid-cols-2 gap-4 text-center">
+                <div className="card-bg p-6 border border-white/5">
                     <p className="text-2xl font-black text-white">{monthApps.length}</p>
                     <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Sessions</p>
                 </div>
-                <div className="card-bg p-6 border border-white/5 text-center">
+                <div className="card-bg p-6 border border-white/5">
                     <p className="text-2xl font-black text-white">{monthApps.length > 0 ? Math.round(totalRev / monthApps.length) : 0}€</p>
                     <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Avg / Job</p>
                 </div>
@@ -63,6 +63,12 @@ function App() {
 
     const currentMonthName = months[currentMonthIdx].name;
     const todayStr = `${new Date().getDate()}. ${months[new Date().getMonth()].name} ${new Date().getFullYear()}`;
+
+    // Funkcija koja proverava da li dan ima zakazivanja
+    const hasAppointment = (day) => {
+        const fullDateStr = `${day}. ${currentMonthName} ${currentYear}`;
+        return appointments.some(app => app.date === fullDateStr);
+    };
 
     const handleMonthChange = (dir) => {
         if (dir === 'next') {
@@ -148,13 +154,19 @@ function App() {
                                 </div>
                                 <button onClick={() => handleMonthChange('next')} className="text-yellow-500 text-2xl font-black px-2"> &gt; </button>
                             </div>
-                            <div className="flex overflow-x-auto no-scrollbar gap-2">
-                                {Array.from({length: months[currentMonthIdx].days}, (_, i) => i + 1).map(day => (
-                                    <button key={day} onClick={() => setSelectedDate(day)}
-                                        className={`flex-shrink-0 w-12 h-14 rounded-xl flex items-center justify-center transition-all ${selectedDate === day ? 'gold-bg text-black font-black' : 'bg-[#0f172a] text-slate-500 border border-slate-800'}`}>
-                                        {day}
-                                    </button>
-                                ))}
+                            <div className="flex overflow-x-auto no-scrollbar gap-2 pb-2">
+                                {Array.from({length: months[currentMonthIdx].days}, (_, i) => i + 1).map(day => {
+                                    const booked = hasAppointment(day);
+                                    return (
+                                        <button key={day} onClick={() => setSelectedDate(day)}
+                                            className={`flex-shrink-0 w-12 h-16 rounded-xl flex flex-col items-center justify-center transition-all relative ${selectedDate === day ? 'gold-bg text-black font-black' : 'bg-[#0f172a] text-slate-500 border border-slate-800'}`}>
+                                            <span className="text-sm">{day}</span>
+                                            {booked && (
+                                                <div className={`w-1.5 h-1.5 rounded-full absolute bottom-2 ${selectedDate === day ? 'bg-black' : 'bg-yellow-500 animate-pulse'}`}></div>
+                                            )}
+                                        </button>
+                                    );
+                                })}
                             </div>
                         </div>
                         <div className="card-bg p-6 min-h-[300px]">
@@ -206,7 +218,7 @@ function App() {
 
             {/* MODAL ZA NOVOG KLIJENTA (CRM) */}
             {isClientModalOpen && (
-                <div className="fixed inset-0 z-[120] bg-black/95 backdrop-blur-xl flex items-center p-6" onClick={() => setIsClientModalOpen(false)}>
+                <div className="fixed inset-0 z-[120] bg-black/95 backdrop-blur-xl flex items-center p-6 animate-in fade-in duration-300" onClick={() => setIsClientModalOpen(false)}>
                     <div className="card-bg w-full p-8 rounded-[40px] border border-slate-800" onClick={e => e.stopPropagation()}>
                         <h2 className="text-xl font-black gold-text uppercase italic mb-8 text-center">New Client Profile</h2>
                         <div className="space-y-4">
@@ -219,7 +231,7 @@ function App() {
                             <input type="text" placeholder="Instagram @tag" className="w-full bg-[#0a0f1d] border border-slate-800 p-5 rounded-2xl outline-none text-white text-center text-sm shadow-inner" 
                                 onChange={e => setNewClient({...newClient, social: e.target.value})} />
                             <button onClick={handleAddClient} className="w-full gold-bg text-black font-black p-5 rounded-2xl uppercase tracking-widest mt-6 shadow-2xl active:scale-95 transition-all">Save Profile</button>
-                            <button onClick={() => setIsClientModalOpen(false)} className="w-full text-slate-600 font-black p-2 uppercase tracking-widest text-[9px]">Cancel</button>
+                            <button onClick={() => setIsClientModalOpen(false)} className="w-full text-slate-600 font-black p-2 uppercase tracking-widest text-[9px] mt-2">Cancel</button>
                         </div>
                     </div>
                 </div>
@@ -227,7 +239,7 @@ function App() {
 
             {/* MODAL ZA DETALJE KLIJENTA */}
             {selectedClientData && (
-                <div className="fixed inset-0 z-[130] bg-black/95 backdrop-blur-xl flex items-center p-6" onClick={() => setSelectedClientData(null)}>
+                <div className="fixed inset-0 z-[130] bg-black/95 backdrop-blur-xl flex items-center p-6 animate-in fade-in duration-300" onClick={() => setSelectedClientData(null)}>
                     <div className="card-bg w-full p-8 rounded-[40px] border border-slate-800" onClick={e => e.stopPropagation()}>
                         <div className="w-20 h-20 gold-bg rounded-full mx-auto flex items-center justify-center text-black text-3xl font-black mb-6 shadow-2xl">{selectedClientData.name[0]}</div>
                         <h2 className="text-2xl font-black text-center text-white uppercase mb-2 italic tracking-tighter">{selectedClientData.name}</h2>
@@ -243,7 +255,7 @@ function App() {
 
             {/* MODAL ZA ZAKAZIVANJE */}
             {isModalOpen && (
-                <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-md flex items-end" onClick={() => setIsModalOpen(false)}>
+                <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-md flex items-end animate-in slide-in-from-bottom duration-500" onClick={() => setIsModalOpen(false)}>
                     <div className="card-bg w-full p-8 rounded-t-[40px] border-t border-slate-800 max-h-[95vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
                         <div className="w-12 h-1 bg-slate-800 mx-auto mb-8 rounded-full"></div>
                         <h2 className="text-xl font-black gold-text uppercase italic mb-8 text-center">{selectedDate}. {currentMonthName} {currentYear}</h2>
