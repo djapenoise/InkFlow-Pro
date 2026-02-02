@@ -5,7 +5,6 @@ function App() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isClientModalOpen, setIsClientModalOpen] = useState(false);
     
-    // Inicijalizacija na trenutni datum
     const [currentMonthIdx, setCurrentMonthIdx] = useState(new Date().getMonth());
     const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
     const [selectedDate, setSelectedDate] = useState(new Date().getDate());
@@ -20,8 +19,12 @@ function App() {
         return saved ? JSON.parse(saved) : [];
     });
 
-    const [newEntry, setNewEntry] = useState({ client: '', time: '', date: '', price: '', phone: '', social: '' });
-    const [newClient, setNewClient] = useState({ name: '', phone: '', social: '' });
+    const [newEntry, setNewEntry] = useState({ 
+        client: '', time: '', date: '', price: '', 
+        phone: '', social: '', email: '', style: '' 
+    });
+    
+    const [newClient, setNewClient] = useState({ name: '', phone: '', social: '', email: '' });
 
     useEffect(() => {
         localStorage.setItem('inkflow_appointments', JSON.stringify(appointments));
@@ -59,18 +62,21 @@ function App() {
         if (!newEntry.client) return;
         const appId = Date.now();
         if (!clients.find(c => c.name.toLowerCase() === newEntry.client.toLowerCase())) {
-            setClients([...clients, { name: newEntry.client, phone: newEntry.phone, social: newEntry.social, id: appId }]);
+            setClients([...clients, { 
+                name: newEntry.client, phone: newEntry.phone, 
+                social: newEntry.social, email: newEntry.email, id: appId 
+            }]);
         }
         setAppointments([...appointments, { ...newEntry, id: appId + 1 }]);
         setIsModalOpen(false);
-        setNewEntry({ client: '', time: '', date: '', price: '', phone: '', social: '' });
+        setNewEntry({ client: '', time: '', date: '', price: '', phone: '', social: '', email: '', style: '' });
     };
 
     const handleAddClient = () => {
         if (!newClient.name) return;
         setClients([...clients, { ...newClient, id: Date.now() }]);
         setIsClientModalOpen(false);
-        setNewClient({ name: '', phone: '', social: '' });
+        setNewClient({ name: '', phone: '', social: '', email: '' });
     };
 
     const deleteApp = (id) => {
@@ -114,7 +120,10 @@ function App() {
                             {appointments.filter(a => a.date === todayStr).length === 0 ? <p className="text-center opacity-20 py-10 italic">No jobs today</p> :
                                 appointments.filter(a => a.date === todayStr).map(app => (
                                     <div key={app.id} className="bg-[#0f172a] p-4 rounded-2xl mb-3 flex justify-between items-center border-l-4 border-yellow-500">
-                                        <div><p className="font-bold">{app.client}</p><p className="text-[10px] text-slate-500 uppercase">{app.time}</p></div>
+                                        <div>
+                                            <p className="font-bold">{app.client}</p>
+                                            <p className="text-[10px] text-slate-500 uppercase">{app.time} | {app.style || 'No Style'}</p>
+                                        </div>
                                         <p className="gold-text font-black">{app.price}</p>
                                     </div>
                                 ))
@@ -123,7 +132,7 @@ function App() {
                     </div>
                 )}
 
-                {/* 2. CALENDAR - Sa izborom godina */}
+                {/* 2. CALENDAR */}
                 {activeTab === 'cal' && (
                     <div className="space-y-6">
                         <div className="card-bg p-6">
@@ -167,7 +176,10 @@ function App() {
                                         <div key={app.id} className="bg-[#0f172a] p-4 rounded-2xl flex justify-between items-center border border-slate-800">
                                             <div className="flex items-center gap-4">
                                                 <span className="text-[10px] font-black text-slate-500 border-r border-slate-800 pr-3">{app.time}</span>
-                                                <p className="font-bold text-white text-sm">{app.client}</p>
+                                                <div>
+                                                    <p className="font-bold text-white text-sm">{app.client}</p>
+                                                    <p className="text-[9px] text-slate-500 uppercase">{app.style}</p>
+                                                </div>
                                             </div>
                                             <div className="flex items-center gap-3">
                                                 <span className="gold-text font-black text-xs">{app.price}</span>
@@ -212,7 +224,7 @@ function App() {
                 )}
             </main>
 
-            {/* MODAL ZA KLIJENTA (CRM) */}
+            {/* MODAL ZA KLIJENTA */}
             {isClientModalOpen && (
                 <div className="fixed inset-0 z-[110] bg-black/95 backdrop-blur-md flex items-center p-6" onClick={() => setIsClientModalOpen(false)}>
                     <div className="card-bg w-full p-8 rounded-[30px] border border-slate-800" onClick={e => e.stopPropagation()}>
@@ -220,9 +232,11 @@ function App() {
                         <div className="space-y-4">
                             <input type="text" placeholder="Full Name" className="w-full bg-[#0f172a] border border-slate-800 p-5 rounded-2xl outline-none font-bold text-white" 
                                 onChange={e => setNewClient({...newClient, name: e.target.value})} />
-                            <input type="tel" placeholder="Phone Number" className="w-full bg-[#0f172a] border border-slate-800 p-5 rounded-2xl outline-none text-white" 
+                            <input type="tel" placeholder="Phone Number" className="w-full bg-[#0f172a] border border-slate-800 p-5 rounded-2xl outline-none text-white text-sm" 
                                 onChange={e => setNewClient({...newClient, phone: e.target.value})} />
-                            <input type="text" placeholder="Instagram / Social" className="w-full bg-[#0f172a] border border-slate-800 p-5 rounded-2xl outline-none text-white" 
+                            <input type="email" placeholder="Email Address" className="w-full bg-[#0f172a] border border-slate-800 p-5 rounded-2xl outline-none text-white text-sm" 
+                                onChange={e => setNewClient({...newClient, email: e.target.value})} />
+                            <input type="text" placeholder="Instagram" className="w-full bg-[#0f172a] border border-slate-800 p-5 rounded-2xl outline-none text-white text-sm" 
                                 onChange={e => setNewClient({...newClient, social: e.target.value})} />
                             <button onClick={handleAddClient} className="w-full gold-bg text-black font-black p-5 rounded-2xl uppercase tracking-widest mt-4">Save Client</button>
                         </div>
@@ -230,19 +244,41 @@ function App() {
                 </div>
             )}
 
-            {/* MODAL ZA ZAKAZIVANJE */}
+            {/* MODAL ZA ZAKAZIVANJE - NOVI SA EMAIL, STYLE I TIME LABELAMA */}
             {isModalOpen && (
                 <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-md flex items-end" onClick={() => setIsModalOpen(false)}>
-                    <div className="card-bg w-full p-8 rounded-t-[40px] border-t border-slate-800" onClick={e => e.stopPropagation()}>
+                    <div className="card-bg w-full p-8 rounded-t-[40px] border-t border-slate-800 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+                        <div className="w-12 h-1 bg-slate-800 mx-auto mb-6 rounded-full"></div>
                         <h2 className="text-xl font-black gold-text uppercase italic mb-6 text-center">{selectedDate}. {currentMonthName}</h2>
                         <div className="space-y-4">
-                            <input type="text" placeholder="Client Name" className="w-full bg-[#0f172a] border border-slate-800 p-5 rounded-2xl outline-none font-bold text-white text-center" 
+                            <input type="text" placeholder="Client Name" className="w-full bg-[#0f172a] border border-slate-800 p-5 rounded-2xl outline-none font-bold text-white text-center shadow-inner" 
                                 onChange={e => setNewEntry({...newEntry, client: e.target.value, date: `${selectedDate}. ${currentMonthName}`})} />
+                            
+                            <input type="text" placeholder="Tattoo Style (e.g. Realism, Tribal)" className="w-full bg-[#0f172a] border border-slate-800 p-5 rounded-2xl outline-none text-white text-center text-sm shadow-inner" 
+                                onChange={e => setNewEntry({...newEntry, style: e.target.value})} />
+
                             <div className="grid grid-cols-2 gap-3">
-                                <input type="time" className="bg-[#0f172a] border border-slate-800 p-5 rounded-2xl font-bold text-yellow-500 text-center" onChange={e => setNewEntry({...newEntry, time: e.target.value})} />
-                                <input type="number" placeholder="Price €" className="bg-[#0f172a] border border-slate-800 p-5 rounded-2xl font-bold text-white text-center" onChange={e => setNewEntry({...newEntry, price: e.target.value + '€'})} />
+                                <input type="tel" placeholder="Phone" className="bg-[#0f172a] border border-slate-800 p-5 rounded-2xl text-sm text-white shadow-inner" 
+                                    onChange={e => setNewEntry({...newEntry, phone: e.target.value})} />
+                                <input type="email" placeholder="Email" className="bg-[#0f172a] border border-slate-800 p-5 rounded-2xl text-sm text-white shadow-inner" 
+                                    onChange={e => setNewEntry({...newEntry, email: e.target.value})} />
                             </div>
-                            <button onClick={handleSave} className="w-full gold-bg text-black font-black p-5 rounded-2xl uppercase tracking-widest mt-4">Confirm</button>
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="relative">
+                                    <span className="absolute top-1 left-4 text-[9px] font-black text-slate-500 uppercase tracking-widest">Time</span>
+                                    <input type="time" className="w-full bg-[#0f172a] border border-slate-800 p-5 pt-7 rounded-2xl font-bold text-yellow-500 text-center shadow-inner" 
+                                        onChange={e => setNewEntry({...newEntry, time: e.target.value})} />
+                                </div>
+                                <div className="relative">
+                                    <span className="absolute top-1 left-4 text-[9px] font-black text-slate-500 uppercase tracking-widest">Price</span>
+                                    <input type="number" placeholder="€" className="w-full bg-[#0f172a] border border-slate-800 p-5 pt-7 rounded-2xl font-bold text-white text-center shadow-inner" 
+                                        onChange={e => setNewEntry({...newEntry, price: e.target.value + '€'})} />
+                                </div>
+                            </div>
+
+                            <button onClick={handleSave} className="w-full gold-bg text-black font-black p-5 rounded-2xl uppercase tracking-widest mt-4 shadow-2xl active:scale-95 transition-transform">Confirm Session</button>
+                            <button onClick={() => setIsModalOpen(false)} className="w-full text-slate-600 text-[10px] font-black uppercase tracking-[0.3em] py-2">Cancel</button>
                         </div>
                     </div>
                 </div>
