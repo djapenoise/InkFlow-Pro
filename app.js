@@ -60,6 +60,11 @@ function App() {
         setIsModalOpen(false);
         setNewEntry({ client: '', time: '', date: '', price: '', phone: '', social: '' });
     };
+const handleDelete = (id) => {
+    if (window.confirm("Da li si siguran da želiš da obrišeš ovaj termin?")) {
+        setAppointments(appointments.filter(app => app.id !== id));
+    }
+};
 
     return (
         <div className="min-h-screen pb-32">
