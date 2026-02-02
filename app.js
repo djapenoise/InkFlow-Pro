@@ -2,13 +2,13 @@ const { useState, useEffect } = React;
 
 // --- FIREBASE KONFIGURACIJA ---
 const firebaseConfig = {
-  apiKey: "AIzaSyDtMzn6v_Ra975jw_lIq1fR_SC5",
+  apiKey: "AIzaSyDtMzn6v_Ra975jw_lIq1fR_SC58heqgLA",
   authDomain: "inkflow-105e9.firebaseapp.com",
   databaseURL: "https://inkflow-105e9-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: "inkflow-105e9",
   storageBucket: "inkflow-105e9.firebasestorage.app",
   messagingSenderId: "384151590972",
-  appId: "1:384151590972:web:6b9d71f5c87686"
+  appId: "1:384151590972:web:6b9d71f5c8768093ed0b39"
 };
 
 // Inicijalizacija
