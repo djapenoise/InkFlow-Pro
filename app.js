@@ -7,23 +7,29 @@ function AuthScreen({ onLogin }) {
     const [password, setPassword] = useState('');
 
     const handleSubmit = () => {
-        if (!email || !password) return alert("Popunite polja!");
+        const cleanEmail = email.trim().toLowerCase();
+        
+        if (!cleanEmail || !password) return alert("Popunite polja!");
+        
         const users = JSON.parse(localStorage.getItem('inkflow_users') || '[]');
-        const cleanEmail = email.toLowerCase().trim(); // Osiguranje da email uvek bude isti format
         
         if (isLogin) {
-            const user = users.find(u => u.email === cleanEmail && u.password === password);
+            const user = users.find(u => u.email.toLowerCase().trim() === cleanEmail && u.password === password);
             if (user) {
                 localStorage.setItem('inkflow_logged_user', JSON.stringify(user));
-                window.location.reload(); // KLJUČNO: Osvežava stranicu da očisti keš
-            } else alert("Pogrešan email ili lozinka!");
+                window.location.reload();
+            } else {
+                alert("Pogrešan email ili lozinka!");
+            }
         } else {
-            if (users.find(u => u.email === cleanEmail)) return alert("Email već postoji!");
+            if (users.find(u => u.email.toLowerCase().trim() === cleanEmail)) {
+                return alert("Email već postoji!");
+            }
             const newUser = { email: cleanEmail, password };
             users.push(newUser);
             localStorage.setItem('inkflow_users', JSON.stringify(users));
             localStorage.setItem('inkflow_logged_user', JSON.stringify(newUser));
-            window.location.reload(); // KLJUČNO: Osvežava stranicu nakon registracije
+            window.location.reload();
         }
     };
 
@@ -33,10 +39,27 @@ function AuthScreen({ onLogin }) {
                 <h1 className="text-4xl font-black gold-text italic tracking-tighter mb-2">INKFLOW</h1>
                 <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.4em] mb-12">Private Studio Access</p>
                 <div className="space-y-4">
-                    <input type="email" placeholder="Artist Email" className="w-full bg-[#0a0f1d] border border-white/5 p-5 rounded-3xl outline-none text-center font-bold" onChange={e => setEmail(e.target.value)} />
-                    <input type="password" placeholder="Password" className="w-full bg-[#0a0f1d] border border-white/5 p-5 rounded-3xl outline-none text-center font-bold" onChange={e => setPassword(e.target.value)} />
-                    <button onClick={handleSubmit} className="w-full gold-bg text-black font-black p-5 rounded-3xl uppercase tracking-widest mt-4 shadow-2xl"> {isLogin ? 'Login' : 'Sign Up'} </button>
-                    <button onClick={() => setIsLogin(!isLogin)} className="text-[9px] text-slate-600 font-bold uppercase mt-6 block mx-auto tracking-widest"> {isLogin ? 'Switch to Sign Up' : 'Switch to Login'} </button>
+                    <input 
+                        type="email" 
+                        placeholder="Artist Email" 
+                        className="w-full bg-[#0a0f1d] border border-white/5 p-5 rounded-3xl outline-none text-center font-bold" 
+                        onChange={e => setEmail(e.target.value)} 
+                        autoCapitalize="none"
+                        autoCorrect="off"
+                        spellCheck="false"
+                    />
+                    <input 
+                        type="password" 
+                        placeholder="Password" 
+                        className="w-full bg-[#0a0f1d] border border-white/5 p-5 rounded-3xl outline-none text-center font-bold" 
+                        onChange={e => setPassword(e.target.value)} 
+                    />
+                    <button onClick={handleSubmit} className="w-full gold-bg text-black font-black p-5 rounded-3xl uppercase tracking-widest mt-4 shadow-2xl"> 
+                        {isLogin ? 'Login' : 'Sign Up'} 
+                    </button>
+                    <button onClick={() => setIsLogin(!isLogin)} className="text-[9px] text-slate-600 font-bold uppercase mt-6 block mx-auto tracking-widest text-white/40"> 
+                        {isLogin ? 'Switch to Sign Up' : 'Switch to Login'} 
+                    </button>
                 </div>
             </div>
         </div>
