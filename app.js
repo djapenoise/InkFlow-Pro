@@ -1,13 +1,31 @@
-const { useState } = React;
+const { useState, useEffect } = React; // Dodali smo useEffect
 
 function App() {
     const [activeTab, setActiveTab] = useState('dash');
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [currentMonthIdx, setCurrentMonthIdx] = useState(1); // Februar 2026
+    const [currentMonthIdx, setCurrentMonthIdx] = useState(new Date().getMonth());
 
-    const [appointments, setAppointments] = useState([]);
-    const [clients, setClients] = useState([]);
+    // Učitavanje podataka iz memorije pri pokretanju
+    const [appointments, setAppointments] = useState(() => {
+        const saved = localStorage.getItem('inkflow_appointments');
+        return saved ? JSON.parse(saved) : [];
+    });
+
+    const [clients, setClients] = useState(() => {
+        const saved = localStorage.getItem('inkflow_clients');
+        return saved ? JSON.parse(saved) : [];
+    });
+
     const [newEntry, setNewEntry] = useState({ client: '', time: '', date: '', price: '', phone: '', social: '' });
+
+    // Automatsko snimanje čim se podaci promene
+    useEffect(() => {
+        localStorage.setItem('inkflow_appointments', JSON.stringify(appointments));
+    }, [appointments]);
+
+    useEffect(() => {
+        localStorage.setItem('inkflow_clients', JSON.stringify(clients));
+    }, [clients]);
 
     const months = [
         { name: "JANUAR", days: 31 }, { name: "FEBRUAR", days: 28 }, { name: "MART", days: 31 },
@@ -15,6 +33,9 @@ function App() {
         { name: "JUL", days: 31 }, { name: "AVGUST", days: 31 }, { name: "SEPTEMBAR", days: 30 },
         { name: "OKTOBAR", days: 31 }, { name: "NOVEMBAR", days: 30 }, { name: "DECEMBAR", days: 31 }
     ];
+    
+    // Ostatak koda (handleMonthChange, handleSave, return...) ostaje ISTI
+
 
     const handleMonthChange = (dir) => {
         if (dir === 'next') setCurrentMonthIdx(prev => (prev === 11 ? 0 : prev + 1));
