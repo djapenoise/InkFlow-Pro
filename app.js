@@ -108,21 +108,40 @@ function App() {
                     />
                 )}
 
-                {/* 4. CLIENTS TAB */}
-                {activeTab === 'crm' && (
-                    <div className="space-y-3">
-                        {clients.map(c => (
-                            <div key={c.id} className="card-bg p-5 flex justify-between items-center shadow-md">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-10 h-10 gold-bg rounded-full flex items-center justify-center text-black font-bold uppercase">{c.name[0]}</div>
-                                    <div><p className="font-bold">{c.name}</p><p className="text-[10px] text-slate-500 uppercase">{c.social || '@no_tag'}</p></div>
-                                </div>
-                                <a href={`tel:${c.phone}`} className="text-yellow-500 p-3 bg-[#0f172a] rounded-full font-bold text-sm">TEL</a>
-                            </div>
-                        ))}
+          {/* 4. CLIENTS TAB - ORIGINALNI DIZAJN */}
+{activeTab === 'crm' && (
+    <div className="space-y-3 animate-in fade-in">
+        {clients.length === 0 ? (
+            <div className="card-bg p-10 text-center opacity-20 italic text-sm">
+                No clients saved yet
+            </div>
+        ) : (
+            clients.map(c => (
+                <div key={c.id || Math.random()} className="card-bg p-5 flex justify-between items-center shadow-md border border-slate-800/50">
+                    <div className="flex items-center gap-4">
+                        {/* Zlatni krug sa slovom */}
+                        <div className="w-12 h-12 gold-bg rounded-full flex items-center justify-center text-black font-black text-lg shadow-lg">
+                            {c.name ? c.name.charAt(0).toUpperCase() : '?'}
+                        </div>
+                        <div>
+                            <p className="font-bold text-white text-lg leading-tight">{c.name}</p>
+                            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">
+                                {c.social || '@no_tag'}
+                            </p>
+                        </div>
                     </div>
-                )}
-            </main>
+                    {/* Dugme za poziv - desna strana */}
+                    <a 
+                        href={`tel:${c.phone}`} 
+                        className="text-yellow-500 p-3 bg-[#0f172a] rounded-full border border-slate-700 active:scale-90 transition-all font-black text-[10px] px-5 shadow-inner"
+                    >
+                        TEL
+                    </a>
+                </div>
+            ))
+        )}
+    </div>
+)}
 
             {/* MODAL ZA UNOS */}
             {isModalOpen && (
