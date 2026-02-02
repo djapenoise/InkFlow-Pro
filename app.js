@@ -1,4 +1,3 @@
-// --- LOGIN KOMPONENTA (Tvoj originalni kod) ---
 function AuthScreen({ onLogin }) {
     const [isLogin, setIsLogin] = useState(true);
     const [email, setEmail] = useState('');
