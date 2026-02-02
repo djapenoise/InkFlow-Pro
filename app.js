@@ -40,11 +40,11 @@ function AuthScreen({ onLogin }) {
 
 // --- BUSINESS TAB ANALIZA ---
 function BusinessOverview({ appointments, currentMonthName, currentYear, months }) {
-    const monthApps = appointments.filter(a => a.date.includes(currentMonthName) && a.date.includes(currentYear));
+    const monthApps = appointments.filter(a => a.date.includes(currentMonthName) && a.date.includes(currentYear.toString()));
     const totalRev = monthApps.reduce((sum, a) => sum + (parseInt(a.price) || 0), 0);
     
     const yearlyStats = months.map(m => {
-        const apps = appointments.filter(a => a.date.includes(m.name) && a.date.includes(currentYear));
+        const apps = appointments.filter(a => a.date.includes(m.name) && a.date.includes(currentYear.toString()));
         const rev = apps.reduce((sum, a) => sum + (parseInt(a.price) || 0), 0);
         return { name: m.name, count: apps.length, rev: rev };
     });
@@ -137,12 +137,31 @@ function App() {
     const currentMonthName = months[currentMonthIdx].name;
     const todayStr = `${new Date().getDate()}. ${months[new Date().getMonth()].name} ${new Date().getFullYear()}`;
 
+    // POPRAVLJENA NAVIGACIJA KROZ GODINE
+    const handleMonthChange = (direction) => {
+        if (direction === 'next') {
+            if (currentMonthIdx === 11) {
+                setCurrentMonthIdx(0);
+                setCurrentYear(prev => prev + 1);
+            } else {
+                setCurrentMonthIdx(prev => prev + 1);
+            }
+        } else {
+            if (currentMonthIdx === 0) {
+                setCurrentMonthIdx(11);
+                setCurrentYear(prev => prev - 1);
+            } else {
+                setCurrentMonthIdx(prev => prev - 1);
+            }
+        }
+    };
+
     const handleSaveAppointment = () => {
         if (!newEntry.client) return;
         const fullDate = `${selectedDate}. ${currentMonthName} ${currentYear}`;
         const appId = Date.now();
         if (!clients.find(c => c.name.toLowerCase() === newEntry.client.toLowerCase())) {
-            setClients([...clients, { name: newEntry.client, phone: newEntry.phone, email: newEntry.email, id: appId }]);
+            setClients([...clients, { name: newEntry.client, phone: newEntry.phone, email: newEntry.email, id: appId, social: '' }]);
         }
         setAppointments([...appointments, { ...newEntry, date: fullDate, id: appId + 1 }]);
         setIsModalOpen(false);
@@ -189,7 +208,7 @@ function App() {
                         <div className="grid grid-cols-2 gap-4 text-center">
                             <div className="card-bg p-6">
                                 <p className="text-2xl font-black gold-text">
-                                    {appointments.filter(a => a.date.includes(currentMonthName) && a.date.includes(currentYear)).reduce((a, b) => a + (parseInt(b.price) || 0), 0)}€
+                                    {appointments.filter(a => a.date.includes(currentMonthName) && a.date.includes(currentYear.toString())).reduce((a, b) => a + (parseInt(b.price) || 0), 0)}€
                                 </p>
                                 <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-1">Month Rev</p>
                             </div>
@@ -216,12 +235,12 @@ function App() {
                     <div className="space-y-6">
                         <div className="card-bg p-6">
                             <div className="flex justify-between items-center mb-6 bg-[#0a0f1d] p-4 rounded-2xl border border-slate-800">
-                                <button onClick={() => setCurrentMonthIdx(prev => prev === 0 ? 11 : prev - 1)} className="text-yellow-500 text-2xl font-black px-2"> &lt; </button>
+                                <button onClick={() => handleMonthChange('prev')} className="text-yellow-500 text-2xl font-black px-2"> &lt; </button>
                                 <div className="text-center">
                                     <p className="font-black gold-text italic text-lg uppercase tracking-tighter">{currentMonthName}</p>
                                     <p className="text-[10px] text-slate-700 font-bold tracking-widest">{currentYear}</p>
                                 </div>
-                                <button onClick={() => setCurrentMonthIdx(prev => prev === 11 ? 0 : prev + 1)} className="text-yellow-500 text-2xl font-black px-2"> &gt; </button>
+                                <button onClick={() => handleMonthChange('next')} className="text-yellow-500 text-2xl font-black px-2"> &gt; </button>
                             </div>
                             <div className="flex overflow-x-auto no-scrollbar gap-2 pb-2">
                                 {Array.from({length: months[currentMonthIdx].days}, (_, i) => i + 1).map(day => {
@@ -288,18 +307,27 @@ function App() {
                 )}
             </main>
 
-            {/* EDIT CLIENT MODAL */}
+            {/* EDIT CLIENT MODAL - POPRAVLJENI LABELS */}
             {isEditClientOpen && editingClient && (
                 <div className="fixed inset-0 z-[140] bg-black/95 backdrop-blur-xl flex items-center p-6 animate-in fade-in duration-300">
                     <div className="card-bg w-full p-8 rounded-[40px] border border-slate-800">
                         <h2 className="text-xl font-black gold-text uppercase italic mb-8 text-center">Edit Profile</h2>
                         <div className="space-y-4">
-                            <input type="text" value={editingClient.name} className="w-full bg-[#0a0f1d] border border-slate-800 p-5 rounded-2xl outline-none font-bold text-white text-center shadow-inner" 
-                                onChange={e => setEditingClient({...editingClient, name: e.target.value})} />
-                            <input type="tel" value={editingClient.phone} className="w-full bg-[#0a0f1d] border border-slate-800 p-5 rounded-2xl outline-none text-white text-center text-sm shadow-inner" 
-                                onChange={e => setEditingClient({...editingClient, phone: e.target.value})} />
-                            <input type="text" value={editingClient.social} className="w-full bg-[#0a0f1d] border border-slate-800 p-5 rounded-2xl outline-none text-white text-center text-sm shadow-inner" 
-                                onChange={e => setEditingClient({...editingClient, social: e.target.value})} />
+                            <div className="relative">
+                                <p className="text-[8px] font-black text-slate-600 uppercase mb-1 ml-2 tracking-widest">Full Name</p>
+                                <input type="text" value={editingClient.name} className="w-full bg-[#0a0f1d] border border-slate-800 p-5 rounded-2xl outline-none font-bold text-white text-center shadow-inner" 
+                                    onChange={e => setEditingClient({...editingClient, name: e.target.value})} />
+                            </div>
+                            <div className="relative">
+                                <p className="text-[8px] font-black text-slate-600 uppercase mb-1 ml-2 tracking-widest">Phone Number</p>
+                                <input type="tel" value={editingClient.phone} className="w-full bg-[#0a0f1d] border border-slate-800 p-5 rounded-2xl outline-none text-white text-center text-sm shadow-inner" 
+                                    onChange={e => setEditingClient({...editingClient, phone: e.target.value})} />
+                            </div>
+                            <div className="relative">
+                                <p className="text-[8px] font-black text-slate-600 uppercase mb-1 ml-2 tracking-widest">Instagram @tag</p>
+                                <input type="text" value={editingClient.social} className="w-full bg-[#0a0f1d] border border-slate-800 p-5 rounded-2xl outline-none text-white text-center text-sm shadow-inner" 
+                                    onChange={e => setEditingClient({...editingClient, social: e.target.value})} />
+                            </div>
                             <button onClick={handleUpdateClient} className="w-full gold-bg text-black font-black p-5 rounded-2xl uppercase tracking-widest mt-6 shadow-2xl">Update Info</button>
                             <button onClick={() => setIsEditClientOpen(false)} className="w-full text-slate-600 font-black p-2 uppercase tracking-widest text-[9px] mt-2 text-center">Cancel</button>
                         </div>
