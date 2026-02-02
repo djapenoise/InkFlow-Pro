@@ -165,36 +165,35 @@ function App() {
     };
 
     const handleSaveAppointment = () => {
-        if (!newEntry.client) return alert("Morate uneti ime klijenta!");
+        if (!newEntry.client) return alert("Morate uneti ime!");
         
         const fullDate = `${selectedDate}. ${currentMonthName} ${currentYear}`;
-        const appointmentRef = db.ref('appointments/' + user.uid).push();
+        const newRef = db.ref('appointments/' + user.uid).push();
         
-        // Provera da li klijent već postoji u bazi
-        const existingClient = clients.find(c => c.name.toLowerCase() === newEntry.client.toLowerCase());
-        
-        if (!existingClient) {
+        // Automatsko kreiranje klijenta ako ne postoji
+        if (!clients.find(c => c.name.toLowerCase() === newEntry.client.toLowerCase())) {
             const clientRef = db.ref('clients/' + user.uid).push();
             clientRef.set({ 
                 name: newEntry.client, 
                 phone: newEntry.phone || '', 
                 social: '', 
-                email: newEntry.email || '', 
+                email: '', 
                 id: clientRef.key 
             });
         }
 
-        appointmentRef.set({ 
+        // Čuvanje zakazanog termina
+        newRef.set({ 
             client: newEntry.client,
             time: newEntry.time || '00:00',
-            date: fullDate,
             price: newEntry.price || '0€',
             style: newEntry.style || 'Tattoo',
-            id: appointmentRef.key 
+            date: fullDate, 
+            id: newRef.key 
         }).then(() => {
             setIsModalOpen(false);
             setNewEntry({ client: '', time: '', date: '', price: '', phone: '', email: '', style: '' });
-        }).catch(err => alert("Greška pri čuvanju: " + err.message));
+        });
     };
 
     const handleAddClient = () => {
@@ -220,7 +219,7 @@ function App() {
                 <div className="flex flex-col">
                     <div className="flex items-baseline gap-2">
                         <h1 className="text-2xl font-black gold-text italic uppercase leading-none tracking-tighter">INKFLOW</h1>
-                        <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest transition-all">by Djape Noise</span>
+                        <span className="text-[7px] font-bold text-slate-500 uppercase tracking-widest">CLOUD PRO</span>
                     </div>
                     <p className="text-[9px] text-slate-600 font-bold uppercase tracking-[0.4em] mt-1">TATTOO MANAGEMENT</p>
                 </div>
