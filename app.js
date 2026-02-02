@@ -165,18 +165,36 @@ function App() {
     };
 
     const handleSaveAppointment = () => {
-        if (!newEntry.client) return;
-        const fullDate = `${selectedDate}. ${currentMonthName} ${currentYear}`;
-        const newRef = db.ref('appointments/' + user.uid).push();
+        if (!newEntry.client) return alert("Morate uneti ime klijenta!");
         
-        if (!clients.find(c => c.name.toLowerCase() === newEntry.client.toLowerCase())) {
+        const fullDate = `${selectedDate}. ${currentMonthName} ${currentYear}`;
+        const appointmentRef = db.ref('appointments/' + user.uid).push();
+        
+        // Provera da li klijent već postoji u bazi
+        const existingClient = clients.find(c => c.name.toLowerCase() === newEntry.client.toLowerCase());
+        
+        if (!existingClient) {
             const clientRef = db.ref('clients/' + user.uid).push();
-            clientRef.set({ name: newEntry.client, phone: newEntry.phone || '', social: '', email: '', id: clientRef.key });
+            clientRef.set({ 
+                name: newEntry.client, 
+                phone: newEntry.phone || '', 
+                social: '', 
+                email: newEntry.email || '', 
+                id: clientRef.key 
+            });
         }
 
-        newRef.set({ ...newEntry, date: fullDate, id: newRef.key });
-        setIsModalOpen(false);
-        setNewEntry({ client: '', time: '', date: '', price: '', phone: '', email: '', style: '' });
+        appointmentRef.set({ 
+            client: newEntry.client,
+            time: newEntry.time || '00:00',
+            date: fullDate,
+            price: newEntry.price || '0€',
+            style: newEntry.style || 'Tattoo',
+            id: appointmentRef.key 
+        }).then(() => {
+            setIsModalOpen(false);
+            setNewEntry({ client: '', time: '', date: '', price: '', phone: '', email: '', style: '' });
+        }).catch(err => alert("Greška pri čuvanju: " + err.message));
     };
 
     const handleAddClient = () => {
