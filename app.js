@@ -95,13 +95,19 @@ const handleDelete = (id) => {
                         <div className="card-bg p-6">
                             <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 italic text-center">Upcoming Sessions</h3>
                             {appointments.length === 0 ? <p className="text-center opacity-20 py-10 italic">No sessions yet</p> : 
-                                appointments.map(app => (
-                                    <div key={app.id} className="bg-[#0f172a] p-4 rounded-2xl mb-3 flex justify-between items-center border-l-4 border-yellow-500">
-                                        <div><p className="font-bold">{app.client}</p><p className="text-[10px] text-slate-500 uppercase">{app.date} | {app.time}</p></div>
-                                        <p className="gold-text font-black">{app.price}</p>
-                                    </div>
-                                ))
-                            }
+                                {appointments.map(app => (
+    <div key={app.id} className="bg-[#0f172a] p-4 rounded-2xl mb-3 flex justify-between items-center border-l-4 border-yellow-500">
+        <div>
+            <p className="font-bold text-white">{app.client}</p>
+            <p className="text-[10px] text-slate-500 uppercase">{app.date} | {app.time}</p>
+        </div>
+        <div className="flex items-center gap-4">
+            <p className="gold-text font-black">{app.price}</p>
+            <button onClick={() => handleDelete(app.id)} className="text-red-800 font-black text-xl px-2">×</button>
+        </div>
+    </div>
+))}
+
                         </div>
                     </div>
                 )}
