@@ -1,6 +1,6 @@
 const { useState, useEffect } = React;
 
-// --- LOGIN KOMPONENTA (Samo za pristup, ne dira dizajn aplikacije) ---
+// --- LOGIN KOMPONENTA ---
 function AuthScreen({ onLogin }) {
     const [isLogin, setIsLogin] = useState(true);
     const [email, setEmail] = useState('');
@@ -38,7 +38,7 @@ function AuthScreen({ onLogin }) {
     );
 }
 
-// --- POMOĆNA KOMPONENTA ZA BUSINESS TAB SA ANALIZOM (Tvoj originalni kod) ---
+// --- BUSINESS TAB ANALIZA ---
 function BusinessOverview({ appointments, currentMonthName, currentYear, months }) {
     const monthApps = appointments.filter(a => a.date.includes(currentMonthName) && a.date.includes(currentYear));
     const totalRev = monthApps.reduce((sum, a) => sum + (parseInt(a.price) || 0), 0);
@@ -91,31 +91,25 @@ function BusinessOverview({ appointments, currentMonthName, currentYear, months 
     );
 }
 
-// --- GLAVNA APLIKACIJA (Tvoj originalni kod + Login logika) ---
+// --- GLAVNA APLIKACIJA ---
 function App() {
     const [user, setUser] = useState(() => JSON.parse(localStorage.getItem('inkflow_logged_user')));
     const [activeTab, setActiveTab] = useState('dash');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isClientModalOpen, setIsClientModalOpen] = useState(false);
+    const [isEditClientOpen, setIsEditClientOpen] = useState(false);
     const [selectedClientData, setSelectedClientData] = useState(null);
+    const [editingClient, setEditingClient] = useState(null);
     
     const [currentMonthIdx, setCurrentMonthIdx] = useState(new Date().getMonth());
     const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
     const [selectedDate, setSelectedDate] = useState(new Date().getDate());
 
-    // Privatni ključevi za localStorage
     const storageKeyApps = user ? `inkflow_apps_${user.email}` : 'guest_apps';
     const storageKeyClients = user ? `inkflow_clients_${user.email}` : 'guest_clients';
 
-    const [appointments, setAppointments] = useState(() => {
-        const saved = localStorage.getItem(storageKeyApps);
-        return saved ? JSON.parse(saved) : [];
-    });
-
-    const [clients, setClients] = useState(() => {
-        const saved = localStorage.getItem(storageKeyClients);
-        return saved ? JSON.parse(saved) : [];
-    });
+    const [appointments, setAppointments] = useState(() => JSON.parse(localStorage.getItem(storageKeyApps) || '[]'));
+    const [clients, setClients] = useState(() => JSON.parse(localStorage.getItem(storageKeyClients) || '[]'));
 
     const [newEntry, setNewEntry] = useState({ client: '', time: '', date: '', price: '', phone: '', email: '', style: '' });
     const [newClient, setNewClient] = useState({ name: '', phone: '', email: '', social: '' });
@@ -143,21 +137,6 @@ function App() {
     const currentMonthName = months[currentMonthIdx].name;
     const todayStr = `${new Date().getDate()}. ${months[new Date().getMonth()].name} ${new Date().getFullYear()}`;
 
-    const hasAppointment = (day) => {
-        const fullDateStr = `${day}. ${currentMonthName} ${currentYear}`;
-        return appointments.some(app => app.date === fullDateStr);
-    };
-
-    const handleMonthChange = (dir) => {
-        if (dir === 'next') {
-            if (currentMonthIdx === 11) { setCurrentMonthIdx(0); setCurrentYear(prev => prev + 1); }
-            else setCurrentMonthIdx(prev => prev + 1);
-        } else {
-            if (currentMonthIdx === 0) { setCurrentMonthIdx(11); setCurrentYear(prev => prev - 1); }
-            else setCurrentMonthIdx(prev => prev - 1);
-        }
-    };
-
     const handleSaveAppointment = () => {
         if (!newEntry.client) return;
         const fullDate = `${selectedDate}. ${currentMonthName} ${currentYear}`;
@@ -177,15 +156,24 @@ function App() {
         setNewClient({ name: '', phone: '', email: '', social: '' });
     };
 
+    const handleUpdateClient = () => {
+        setClients(clients.map(c => c.id === editingClient.id ? editingClient : c));
+        setIsEditClientOpen(false);
+        setEditingClient(null);
+    };
+
     const deleteApp = (id) => { if (window.confirm("Obrisati termin?")) setAppointments(appointments.filter(a => a.id !== id)); };
     const deleteClient = (id, e) => { e.stopPropagation(); if (window.confirm("Obrisati klijenta?")) setClients(clients.filter(c => c.id !== id)); };
 
     return (
         <div className="min-h-screen pb-32">
             <header className="p-6 flex justify-between items-center">
-                <div>
-                    <h1 className="text-2xl font-black gold-text italic uppercase leading-none tracking-tighter">INKFLOW PRO</h1>
-                    <p className="text-[10px] text-slate-600 font-bold uppercase tracking-[0.3em]">Studio: {user.email.split('@')[0]}</p>
+                <div className="flex flex-col">
+                    <div className="flex items-baseline gap-2">
+                        <h1 className="text-2xl font-black gold-text italic uppercase leading-none tracking-tighter">INKFLOW</h1>
+                        <span className="text-[7px] font-bold text-slate-500 uppercase tracking-widest">by Djape Noise</span>
+                    </div>
+                    <p className="text-[9px] text-slate-600 font-bold uppercase tracking-[0.4em] mt-1">TATTOO MANAGEMENT</p>
                 </div>
                 <div className="flex gap-2">
                     <button onClick={() => {localStorage.removeItem('inkflow_logged_user'); setUser(null);}} className="bg-slate-800 text-slate-400 p-2 rounded-full text-[8px] uppercase font-black">Out</button>
@@ -228,16 +216,16 @@ function App() {
                     <div className="space-y-6">
                         <div className="card-bg p-6">
                             <div className="flex justify-between items-center mb-6 bg-[#0a0f1d] p-4 rounded-2xl border border-slate-800">
-                                <button onClick={() => handleMonthChange('prev')} className="text-yellow-500 text-2xl font-black px-2"> &lt; </button>
+                                <button onClick={() => setCurrentMonthIdx(prev => prev === 0 ? 11 : prev - 1)} className="text-yellow-500 text-2xl font-black px-2"> &lt; </button>
                                 <div className="text-center">
                                     <p className="font-black gold-text italic text-lg uppercase tracking-tighter">{currentMonthName}</p>
                                     <p className="text-[10px] text-slate-700 font-bold tracking-widest">{currentYear}</p>
                                 </div>
-                                <button onClick={() => handleMonthChange('next')} className="text-yellow-500 text-2xl font-black px-2"> &gt; </button>
+                                <button onClick={() => setCurrentMonthIdx(prev => prev === 11 ? 0 : prev + 1)} className="text-yellow-500 text-2xl font-black px-2"> &gt; </button>
                             </div>
                             <div className="flex overflow-x-auto no-scrollbar gap-2 pb-2">
                                 {Array.from({length: months[currentMonthIdx].days}, (_, i) => i + 1).map(day => {
-                                    const booked = hasAppointment(day);
+                                    const booked = appointments.some(a => a.date === `${day}. ${currentMonthName} ${currentYear}`);
                                     return (
                                         <button key={day} onClick={() => setSelectedDate(day)}
                                             className={`flex-shrink-0 w-12 h-16 rounded-xl flex flex-col items-center justify-center transition-all relative ${selectedDate === day ? 'gold-bg text-black font-black' : 'bg-[#0f172a] text-slate-500 border border-slate-800'}`}>
@@ -289,7 +277,10 @@ function App() {
                                         <div className="w-10 h-10 gold-bg rounded-full flex items-center justify-center text-black font-black">{c.name[0]}</div>
                                         <div><p className="font-bold text-white">{c.name}</p><p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">{c.social || '@ink_client'}</p></div>
                                     </div>
-                                    <button onClick={(e) => deleteClient(c.id, e)} className="p-3 grayscale opacity-30 hover:opacity-100 transition-opacity">🗑️</button>
+                                    <div className="flex items-center gap-2">
+                                        <button onClick={(e) => { e.stopPropagation(); setEditingClient(c); setIsEditClientOpen(true); }} className="p-3 opacity-30 hover:opacity-100 transition-opacity">✏️</button>
+                                        <button onClick={(e) => deleteClient(c.id, e)} className="p-3 grayscale opacity-30 hover:opacity-100 transition-opacity">🗑️</button>
+                                    </div>
                                 </div>
                             ))
                         }
@@ -297,7 +288,26 @@ function App() {
                 )}
             </main>
 
-            {/* MODALI (Tvoj kod, bez promena) */}
+            {/* EDIT CLIENT MODAL */}
+            {isEditClientOpen && editingClient && (
+                <div className="fixed inset-0 z-[140] bg-black/95 backdrop-blur-xl flex items-center p-6 animate-in fade-in duration-300">
+                    <div className="card-bg w-full p-8 rounded-[40px] border border-slate-800">
+                        <h2 className="text-xl font-black gold-text uppercase italic mb-8 text-center">Edit Profile</h2>
+                        <div className="space-y-4">
+                            <input type="text" value={editingClient.name} className="w-full bg-[#0a0f1d] border border-slate-800 p-5 rounded-2xl outline-none font-bold text-white text-center shadow-inner" 
+                                onChange={e => setEditingClient({...editingClient, name: e.target.value})} />
+                            <input type="tel" value={editingClient.phone} className="w-full bg-[#0a0f1d] border border-slate-800 p-5 rounded-2xl outline-none text-white text-center text-sm shadow-inner" 
+                                onChange={e => setEditingClient({...editingClient, phone: e.target.value})} />
+                            <input type="text" value={editingClient.social} className="w-full bg-[#0a0f1d] border border-slate-800 p-5 rounded-2xl outline-none text-white text-center text-sm shadow-inner" 
+                                onChange={e => setEditingClient({...editingClient, social: e.target.value})} />
+                            <button onClick={handleUpdateClient} className="w-full gold-bg text-black font-black p-5 rounded-2xl uppercase tracking-widest mt-6 shadow-2xl">Update Info</button>
+                            <button onClick={() => setIsEditClientOpen(false)} className="w-full text-slate-600 font-black p-2 uppercase tracking-widest text-[9px] mt-2 text-center">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* NEW CLIENT MODAL */}
             {isClientModalOpen && (
                 <div className="fixed inset-0 z-[120] bg-black/95 backdrop-blur-xl flex items-center p-6 animate-in fade-in duration-300" onClick={() => setIsClientModalOpen(false)}>
                     <div className="card-bg w-full p-8 rounded-[40px] border border-slate-800" onClick={e => e.stopPropagation()}>
@@ -307,17 +317,16 @@ function App() {
                                 onChange={e => setNewClient({...newClient, name: e.target.value})} />
                             <input type="tel" placeholder="Phone Number" className="w-full bg-[#0a0f1d] border border-slate-800 p-5 rounded-2xl outline-none text-white text-center text-sm shadow-inner" 
                                 onChange={e => setNewClient({...newClient, phone: e.target.value})} />
-                            <input type="email" placeholder="Email Address" className="w-full bg-[#0a0f1d] border border-slate-800 p-5 rounded-2xl outline-none text-white text-center text-sm shadow-inner" 
-                                onChange={e => setNewClient({...newClient, email: e.target.value})} />
                             <input type="text" placeholder="Instagram @tag" className="w-full bg-[#0a0f1d] border border-slate-800 p-5 rounded-2xl outline-none text-white text-center text-sm shadow-inner" 
                                 onChange={e => setNewClient({...newClient, social: e.target.value})} />
                             <button onClick={handleAddClient} className="w-full gold-bg text-black font-black p-5 rounded-2xl uppercase tracking-widest mt-6 shadow-2xl active:scale-95 transition-all">Save Profile</button>
-                            <button onClick={() => setIsClientModalOpen(false)} className="w-full text-slate-600 font-black p-2 uppercase tracking-widest text-[9px] mt-2">Cancel</button>
+                            <button onClick={() => setIsClientModalOpen(false)} className="w-full text-slate-600 font-black p-2 uppercase tracking-widest text-[9px] mt-2 text-center">Cancel</button>
                         </div>
                     </div>
                 </div>
             )}
 
+            {/* CLIENT VIEW MODAL */}
             {selectedClientData && (
                 <div className="fixed inset-0 z-[130] bg-black/95 backdrop-blur-xl flex items-center p-6 animate-in fade-in duration-300" onClick={() => setSelectedClientData(null)}>
                     <div className="card-bg w-full p-8 rounded-[40px] border border-slate-800" onClick={e => e.stopPropagation()}>
@@ -326,13 +335,13 @@ function App() {
                         <p className="text-center gold-text font-bold text-[10px] mb-8 tracking-[0.3em] uppercase">{selectedClientData.social || '@ink_client'}</p>
                         <div className="space-y-3 bg-[#0a0f1d] p-6 rounded-3xl border border-slate-800 shadow-inner mb-6 text-center">
                             <p className="text-slate-600 text-[9px] font-black uppercase">Phone</p><p className="text-white font-bold tracking-widest mb-3">{selectedClientData.phone || '—'}</p>
-                            <p className="text-slate-600 text-[9px] font-black uppercase">Email</p><p className="text-white font-bold text-xs">{selectedClientData.email || '—'}</p>
                         </div>
                         <button onClick={() => setSelectedClientData(null)} className="w-full bg-slate-800 text-slate-500 font-black p-5 rounded-2xl uppercase tracking-[0.2em] text-[10px]">Close</button>
                     </div>
                 </div>
             )}
 
+            {/* ADD SESSION MODAL */}
             {isModalOpen && (
                 <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-md flex items-end animate-in slide-in-from-bottom duration-500" onClick={() => setIsModalOpen(false)}>
                     <div className="card-bg w-full p-8 rounded-t-[40px] border-t border-slate-800 max-h-[95vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
