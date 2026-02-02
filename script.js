@@ -2,7 +2,6 @@ const { useState, useEffect } = React;
 
 // --- FIREBASE KONFIGURACIJA ---
 const firebaseConfig = {
-  apiKey: ["AIza", "SyDtM", "zn6v_", "Ra975jw", "_lIq1fR", "_SC58heqgLA"].join("",
   authDomain: "inkflow-105e9.firebaseapp.com",
   databaseURL: "https://inkflow-105e9-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: "inkflow-105e9",
