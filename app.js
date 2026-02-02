@@ -5,7 +5,6 @@ function BusinessOverview({ appointments, currentMonthName, currentYear, months 
     const monthApps = appointments.filter(a => a.date.includes(currentMonthName) && a.date.includes(currentYear));
     const totalRev = monthApps.reduce((sum, a) => sum + (parseInt(a.price) || 0), 0);
     
-    // Analiza za celu godinu
     const yearlyStats = months.map(m => {
         const apps = appointments.filter(a => a.date.includes(m.name) && a.date.includes(currentYear));
         const rev = apps.reduce((sum, a) => sum + (parseInt(a.price) || 0), 0);
@@ -14,7 +13,6 @@ function BusinessOverview({ appointments, currentMonthName, currentYear, months 
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
-            {/* TRENUTNI MESEC */}
             <div className="card-bg p-8 border border-white/5 shadow-2xl relative overflow-hidden text-center">
                 <div className="absolute top-0 right-0 w-32 h-32 gold-bg opacity-5 blur-[50px] rounded-full"></div>
                 <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-2">Monthly Revenue</h3>
@@ -33,7 +31,6 @@ function BusinessOverview({ appointments, currentMonthName, currentYear, months 
                 </div>
             </div>
 
-            {/* ANALIZA SVIH MESECI - NOVO */}
             <div className="card-bg p-6 border border-white/5">
                 <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4 italic border-b border-white/5 pb-3 text-center">Yearly Performance ({currentYear})</h3>
                 <div className="max-h-[300px] overflow-y-auto no-scrollbar space-y-2">
@@ -134,8 +131,11 @@ function App() {
         <div className="min-h-screen pb-32">
             <header className="p-6 flex justify-between items-center">
                 <div>
-                    <h1 className="text-2xl font-black gold-text italic uppercase leading-none tracking-tighter">INKFLOW PRO</h1>
-                    <p className="text-[10px] text-slate-600 font-bold uppercase tracking-[0.3em]">Management</p>
+                    <div className="flex items-baseline gap-2">
+                        <h1 className="text-2xl font-black gold-text italic uppercase leading-none tracking-tighter">INKFLOW PRO</h1>
+                        <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest opacity-80">by Djape Noise</span>
+                    </div>
+                    <p className="text-[10px] text-slate-600 font-bold uppercase tracking-[0.3em] mt-1">Tattoo Management</p>
                 </div>
                 {activeTab === 'crm' && (
                     <button onClick={() => setIsClientModalOpen(true)} className="gold-bg text-black px-6 py-2 rounded-full font-black text-[10px] uppercase shadow-lg active:scale-90 transition-transform">Add</button>
@@ -244,9 +244,9 @@ function App() {
                 )}
             </main>
 
-            {/* MODALI - ISTI KAO RANIJE (NEPROMENJENI) */}
+            {/* MODALI (UNNOS KLIJENTA, DETALJI, ZAKAZIVANJE) */}
             {isClientModalOpen && (
-                <div className="fixed inset-0 z-[120] bg-black/95 backdrop-blur-xl flex items-center p-6 animate-in fade-in duration-300" onClick={() => setIsClientModalOpen(false)}>
+                <div className="fixed inset-0 z-[120] bg-black/95 backdrop-blur-xl flex items-center p-6" onClick={() => setIsClientModalOpen(false)}>
                     <div className="card-bg w-full p-8 rounded-[40px] border border-slate-800" onClick={e => e.stopPropagation()}>
                         <h2 className="text-xl font-black gold-text uppercase italic mb-8 text-center">New Client Profile</h2>
                         <div className="space-y-4">
@@ -266,7 +266,7 @@ function App() {
             )}
 
             {selectedClientData && (
-                <div className="fixed inset-0 z-[130] bg-black/95 backdrop-blur-xl flex items-center p-6 animate-in fade-in duration-300" onClick={() => setSelectedClientData(null)}>
+                <div className="fixed inset-0 z-[130] bg-black/95 backdrop-blur-xl flex items-center p-6" onClick={() => setSelectedClientData(null)}>
                     <div className="card-bg w-full p-8 rounded-[40px] border border-slate-800" onClick={e => e.stopPropagation()}>
                         <div className="w-20 h-20 gold-bg rounded-full mx-auto flex items-center justify-center text-black text-3xl font-black mb-6 shadow-2xl">{selectedClientData.name[0]}</div>
                         <h2 className="text-2xl font-black text-center text-white uppercase mb-2 italic tracking-tighter">{selectedClientData.name}</h2>
@@ -281,7 +281,7 @@ function App() {
             )}
 
             {isModalOpen && (
-                <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-md flex items-end animate-in slide-in-from-bottom duration-500" onClick={() => setIsModalOpen(false)}>
+                <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-md flex items-end" onClick={() => setIsModalOpen(false)}>
                     <div className="card-bg w-full p-8 rounded-t-[40px] border-t border-slate-800 max-h-[95vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
                         <div className="w-12 h-1 bg-slate-800 mx-auto mb-8 rounded-full"></div>
                         <h2 className="text-xl font-black gold-text uppercase italic mb-8 text-center">{selectedDate}. {currentMonthName} {currentYear}</h2>
